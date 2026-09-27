@@ -55,7 +55,7 @@ export function normalizeDataset(raw){
   return d;
 }
 export function createCharacter(template={}) {
-  return {id:crypto.randomUUID(),name:'Новый герой',level:1,classId:'warlock',raceId:'human',subraceId:'',subclassId:'',backgroundId:'',stats:{str:8,dex:14,con:13,int:10,wis:12,cha:15},choices:{},manualFeatures:[],spells:[],inventory:[],itemOverrides:{},spent:{},customLanguages:[],damage:0,tempHp:0,goldDelta:0,notes:'',avatar:'',armor:'none',shield:false,mageArmor:false,acBonus:0,hpBonus:0,inspiration:false,conditions:[],draft:true,...template};
+  return {id:crypto.randomUUID(),name:'Новый герой',level:1,classId:'warlock',raceId:'human',subraceId:'',subclassId:'',backgroundId:'',stats:{str:8,dex:14,con:13,int:10,wis:12,cha:15},choices:{},manualFeatures:[],spells:[],inventory:[],itemOverrides:{},spent:{},customLanguages:[],damage:0,tempHp:0,goldDelta:0,notes:'',appearance:'',backstory:'',allies:'',personality:'',ideals:'',bonds:'',flaws:'',goals:'',avatar:'',armor:'none',shield:false,mageArmor:false,acBonus:0,hpBonus:0,inspiration:false,conditions:[],draft:true,...template};
 }
 export function partyTemplates(){return [
   createCharacter({name:'Авантюрин',level:4,classId:'warlock',raceId:'human',subclassId:'aha-patron',backgroundId:'professional-gambler',notes:'Покровитель — Аха. Магические фишки, карты и удача.\n\nЭто заготовка: внесите характеристики и выборы со своего листа.'}),
