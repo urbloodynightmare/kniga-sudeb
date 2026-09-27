@@ -1,6 +1,6 @@
-import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js';
-import {spellNames} from './spell-names.js';
-import {cloud} from './cloud.js';
+import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20260927-1';
+import {spellNames} from './spell-names.js?v=20260927-1';
+import {cloud} from './cloud.js?v=20260927-1';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICONS={party:'◈',sheet:'▤',growth:'✧',spells:'✦',inventory:'◇',notes:'☷',library:'⌕',rules:'⊙'};
 const CLASS_MARK={warlock:'✧',fighter:'⚔',wizard:'✦',druid:'❧',rogue:'♠'};
@@ -225,7 +225,7 @@ $('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog'
 $('#dialog').addEventListener('close',()=>render());
 window.addEventListener('storage',e=>{if(e.key===storageKey()){toast('Листы изменены в другой вкладке. Обновите страницу перед редактированием.');}});
 try{
-  [rawDataset,spells]=await Promise.all([fetch('./data/party.json').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json').then(r=>r.json())]);
+  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20260927-1').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20260927-1').then(r=>r.json())]);
   const stored=localStorage.getItem(STORE);state=stored?JSON.parse(stored):{characters:partyTemplates(),journal:''};
   if(!Array.isArray(state.characters))throw Error('Повреждено сохранение. Скачайте данные браузера перед сбросом.');
   dataset=normalizeDataset(state.dataset||rawDataset);selected=state.characters[0]?.id;
