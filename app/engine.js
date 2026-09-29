@@ -149,6 +149,14 @@ export function derive(c,d,validationPass=0){
     if(f.featId)visit([{type:'feat',featId:f.featId}],'manual/'+f.id,1,'Добавлено вручную');
     else traits.set(f.id,{...f,source:'Добавлено вручную',level:1});
   }
+  const equippedItems=[...s.equipment,...(c.inventory||[])].map(item=>({...item,...(c.itemOverrides?.[item.id]||{})})).filter(item=>!item.removed&&Number(item.qty)>0&&item.equipped);
+  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0};
+  for(const item of equippedItems){
+    const effects=item.effects||{};
+    for(const key of Object.keys(s.itemBonuses))s.itemBonuses[key]+=Number(effects[key])||0;
+    if(effects.ability&&STATS[effects.ability])s.stats[effects.ability]=Math.min(30,s.stats[effects.ability]+(Number(effects.abilityBonus)||0));
+    if(item.imbuedSpell?.id&&Number(item.imbuedSpell.uses)>0)s.fixedSpells.push({type:'spell-fixed',slug:item.imbuedSpell.id,source:item.name,itemId:item.id,uses:Number(item.imbuedSpell.uses),rest:item.imbuedSpell.rest||'long',key:'item-spell:'+item.id});
+  }
   s.mods=Object.fromEntries(Object.entries(s.stats).map(([k,v])=>[k,mod(v)]));
   const vars={LVL:level,PROF:prof,...Object.fromEntries(Object.entries(s.mods).map(([k,v])=>[k.toUpperCase(),v]))};
   const bonuses={};for(const b of s.bonuses){try{if(b.target==='ac'&&c.armor==='none')continue;bonuses[b.target]=(bonuses[b.target]||0)+(b.expr?expression(b.expr,vars):(b.value||0));}catch{s.warnings.push('Не удалось посчитать '+b.label);}}
@@ -158,13 +166,14 @@ export function derive(c,d,validationPass=0){
   s.hp=clamp(s.hpMax-c.damage,0,s.hpMax);
   s.initiative=s.mods.dex+(bonuses.initiative||0);s.speed+=bonuses['speed.walk']||0;
   const armor={none:10+s.mods.dex,leather:11+s.mods.dex,studded:12+s.mods.dex,hide:12+Math.min(2,s.mods.dex),'chain-shirt':13+Math.min(2,s.mods.dex),scale:14+Math.min(2,s.mods.dex),breastplate:14+Math.min(2,s.mods.dex),'half-plate':15+Math.min(2,s.mods.dex),ring:14,chain:16,splint:17,plate:18};
-  s.ac=(armor[c.armor]??armor.none)+(c.shield?2:0)+(bonuses.ac||0)+(Number(c.acBonus)||0);
-  if(c.mageArmor&&c.armor==='none')s.ac=13+s.mods.dex+(c.shield?2:0)+(Number(c.acBonus)||0);
+  s.ac=(armor[c.armor]??armor.none)+(c.shield?2:0)+(bonuses.ac||0)+(Number(c.acBonus)||0)+s.itemBonuses.ac;
+  if(c.mageArmor&&c.armor==='none')s.ac=13+s.mods.dex+(c.shield?2:0)+(Number(c.acBonus)||0)+s.itemBonuses.ac;
   s.skillBonuses=Object.fromEntries(Object.entries(SKILLS).map(([k,[,stat]])=>[k,s.mods[stat]+(s.skills.has(k)?prof:0)+(s.expertise.has(k)&&s.skills.has(k)?prof:0)+(bonuses['skill.'+k]||0)]));
   s.passive=10+s.skillBonuses.perception;
   s.saveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.mods[k]+(s.saves.has(k)?prof:0)]));
+  s.spellSaveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.saveBonuses[k]+s.itemBonuses.spellSave]));
   s.gold+=Number(c.goldDelta)||0;
-  s.spellDC=8+prof+(s.mods[s.casting?.ability]||0);s.spellAttack=prof+(s.mods[s.casting?.ability]||0);
+  s.spellDC=8+prof+(s.mods[s.casting?.ability]||0)+s.itemBonuses.spellDC;s.spellAttack=prof+(s.mods[s.casting?.ability]||0)+s.itemBonuses.spellAttack;
   s.slots=s.casting?.progression==='pact'?[{level:Math.min(5,Math.ceil(level/2)),max:level>=17?4:level>=11?3:level>=2?2:1,id:'pact'}]:s.casting?FULL_SLOTS[level].map((max,i)=>({level:i+1,max,id:'slot-'+(i+1)})):[];
   s.cantrips=s.casting?.cantripsByLevel[level]||0;s.prepared=s.casting?.knownByLevel[level]||0;
   for(const q of s.choices){
@@ -199,6 +208,7 @@ export function rest(c,s,long){
     else if(!long&&r.isShortRest)next.spent[r.id]=r.shortRestRegain?Math.max(0,(next.spent[r.id]||0)-Number(r.shortRestRegain)):0;
   }
   if(long||s.casting?.progression==='pact')s.slots.forEach(slot=>next.spent[slot.id]=0);
+  for(const item of [...s.equipment,...(next.inventory||[])].map(entry=>({...entry,...(next.itemOverrides?.[entry.id]||{})})))if(item.imbuedSpell?.id&&(long||item.imbuedSpell.rest==='short'))next.spent['item-spell:'+item.id]=0;
   if(long){next.damage=0;next.tempHp=0;next.spent['hit-dice']=0;for(const k of Object.keys(next.spent))if(k.startsWith('free-spell:'))next.spent[k]=0;if(next.raceId==='human')next.inspiration=true;}
   return next;
 }
