@@ -92,3 +92,22 @@ test('equipped items can grant advantage to saving throws and individual skills'
   assert.equal(state.advantageChecks.has('saves'),true);
   assert.equal(state.advantageChecks.has('skill:perception'),true);
 });
+
+test('2024 warlock has the complete level 3 spell list',()=>{
+  const spells=JSON.parse(fs.readFileSync(new URL('../data/spells.json',import.meta.url)));
+  const level3=spells.filter(spell=>spell.level===3&&spell.classes.includes('warlock'));
+  assert.equal(level3.length,14);
+  for(const id of ['hunger-of-hadar','summon-fey','summon-undead'])assert.ok(level3.some(spell=>spell.id===id&&spell.descriptionRu));
+});
+
+test('2024 spell lists are complete for every spellcasting class in the party',()=>{
+  const spells=JSON.parse(fs.readFileSync(new URL('../data/spells.json',import.meta.url)));
+  assert.equal(spells.filter(spell=>spell.classes.includes('warlock')).length,91);
+  assert.equal(spells.filter(spell=>spell.classes.includes('druid')).length,135);
+  const required=['thorn-whip','thunderclap','beast-sense','summon-beast','aura-of-vitality','elemental-weapon','feign-death','fount-of-moonlight','grasping-vine','summon-elemental','blade-ward','friends','mind-sliver','toll-the-dead','armor-of-agathys','arms-of-hadar','witch-bolt','cloud-of-daggers','crown-of-madness','summon-aberration','jallarzis-storm-of-radiance','synaptic-static','arcane-gate','summon-fiend','tashas-bubbling-cauldron'];
+  for(const id of required){
+    const spell=spells.find(item=>item.id===id);
+    assert.ok(spell?.nameRu&&spell?.descriptionRu,`${id} must have a Russian name and description`);
+  }
+  assert.ok(spells.some(spell=>spell.id==='thunderclap'&&spell.classes.includes('wizard')));
+});
