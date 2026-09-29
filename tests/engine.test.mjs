@@ -66,7 +66,7 @@ test('ASI does not silently exceed 20',()=>{
 
 test('equipped magic items apply bonuses, grant spells, and recover charges',()=>{
   const c=warlock(4),base=derive(c,d),spellId='magic-missile';
-  c.inventory.push({id:'ring-test',name:'Кольцо испытаний',qty:1,equipped:true,effects:{ac:1,spellAttack:2,spellDC:1,spellSave:2,ability:'cha',abilityBonus:1,attack:1,damage:1},imbuedSpell:{id:spellId,uses:3,rest:'short'}});
+  c.inventory.push({id:'ring-test',name:'Кольцо испытаний',qty:1,equipped:true,effects:{ac:1,spellAttack:2,spellDC:1,spellSave:2,ability:'cha',abilityBonus:1,attack:1,damage:1,advantage:'skills'},imbuedSpell:{id:spellId,uses:3,rest:'short'}});
   const state=derive(c,d);
   assert.equal(state.ac,base.ac+1);
   assert.equal(state.stats.cha,base.stats.cha+1);
@@ -75,9 +75,20 @@ test('equipped magic items apply bonuses, grant spells, and recover charges',()=
   assert.equal(state.spellSaveBonuses.dex,state.saveBonuses.dex+2);
   assert.equal(state.itemBonuses.attack,1);
   assert.equal(state.itemBonuses.damage,1);
+  assert.equal(state.advantageChecks.has('skills'),true);
   assert.equal(state.fixedSpells.some(x=>x.slug===spellId&&x.uses===3&&x.key==='item-spell:ring-test'),true);
   c.spent['item-spell:ring-test']=2;
   assert.equal(rest(c,state,false).spent['item-spell:ring-test'],0);
   c.inventory[0].equipped=false;
   assert.equal(derive(c,d).fixedSpells.some(x=>x.key==='item-spell:ring-test'),false);
+  assert.equal(derive(c,d).advantageChecks.size,0);
+});
+
+test('equipped items can grant advantage to saving throws and individual skills',()=>{
+  const c=warlock(4);
+  c.inventory.push({id:'cloak-test',name:'Плащ испытаний',qty:1,equipped:true,effects:{advantage:'saves'}});
+  c.inventory.push({id:'lens-test',name:'Линза наблюдения',qty:1,equipped:true,effects:{advantage:'skill:perception'}});
+  const state=derive(c,d);
+  assert.equal(state.advantageChecks.has('saves'),true);
+  assert.equal(state.advantageChecks.has('skill:perception'),true);
 });

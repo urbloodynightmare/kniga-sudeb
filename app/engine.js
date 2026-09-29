@@ -150,11 +150,12 @@ export function derive(c,d,validationPass=0){
     else traits.set(f.id,{...f,source:'Добавлено вручную',level:1});
   }
   const equippedItems=[...s.equipment,...(c.inventory||[])].map(item=>({...item,...(c.itemOverrides?.[item.id]||{})})).filter(item=>!item.removed&&Number(item.qty)>0&&item.equipped);
-  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0};
+  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0};s.advantageChecks=new Set();
   for(const item of equippedItems){
     const effects=item.effects||{};
     for(const key of Object.keys(s.itemBonuses))s.itemBonuses[key]+=Number(effects[key])||0;
     if(effects.ability&&STATS[effects.ability])s.stats[effects.ability]=Math.min(30,s.stats[effects.ability]+(Number(effects.abilityBonus)||0));
+    if(typeof effects.advantage==='string'&&effects.advantage)s.advantageChecks.add(effects.advantage);
     if(item.imbuedSpell?.id&&Number(item.imbuedSpell.uses)>0)s.fixedSpells.push({type:'spell-fixed',slug:item.imbuedSpell.id,source:item.name,itemId:item.id,uses:Number(item.imbuedSpell.uses),rest:item.imbuedSpell.rest||'long',key:'item-spell:'+item.id});
   }
   s.mods=Object.fromEntries(Object.entries(s.stats).map(([k,v])=>[k,mod(v)]));
