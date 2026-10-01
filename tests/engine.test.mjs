@@ -42,7 +42,7 @@ test('safe arithmetic rejects executable code and computes supported expressions
   assert.throws(()=>expression('process.exit()'));assert.throws(()=>expression('1/0'));
 });
 test('backup round trip validates input and assigns fresh IDs',()=>{
-  const c=warlock(4);c.notes='Сессия 1\nАха смеётся';const [copy]=validateSave({format:'book-of-fates',version:1,characters:[c]},d);assert.notEqual(copy.id,c.id);assert.equal(copy.notes,c.notes);
+  const c=warlock(4);c.notes='Сессия 1\nАха смеётся';c.inventory.push({id:'loot',name:'Старая корона',qty:1,forSale:true});const [copy]=validateSave({format:'book-of-fates',version:1,characters:[c]},d);assert.notEqual(copy.id,c.id);assert.equal(copy.notes,c.notes);assert.equal(copy.inventory[0].forSale,true);
   assert.throws(()=>validateSave({format:'book-of-fates',version:1,characters:[{...c,level:99}]},d));
 });
 test('conditional Defense fighting style and Mage Armor calculations',()=>{
