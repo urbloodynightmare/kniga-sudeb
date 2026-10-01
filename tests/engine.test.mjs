@@ -93,6 +93,16 @@ test('equipped items can grant advantage to saving throws and individual skills'
   assert.equal(state.advantageChecks.has('skill:perception'),true);
 });
 
+test('weapon bonuses can target one equipped weapon without affecting every attack',()=>{
+  const c=warlock(4);
+  c.inventory.push({id:'blade-test',name:'Рапира дуэлянта',qty:1,equipped:true,effects:{attack:2,damage:1,weaponScope:'self',weaponType:'rapier'}});
+  const state=derive(c,d);
+  assert.equal(state.itemBonuses.attack,0);
+  assert.equal(state.itemBonuses.damage,0);
+  assert.equal(state.weaponItems.length,1);
+  assert.equal(state.weaponItems[0].id,'blade-test');
+});
+
 test('2024 warlock has the complete level 3 spell list',()=>{
   const spells=JSON.parse(fs.readFileSync(new URL('../data/spells.json',import.meta.url)));
   const level3=spells.filter(spell=>spell.level===3&&spell.classes.includes('warlock'));
