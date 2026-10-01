@@ -96,9 +96,15 @@ test('equipped items can grant advantage to saving throws and individual skills'
 test('weapon bonuses can target one equipped weapon without affecting every attack',()=>{
   const c=warlock(4);
   c.inventory.push({id:'blade-test',name:'Рапира дуэлянта',qty:1,equipped:true,effects:{attack:2,damage:1,weaponScope:'self',weaponType:'rapier'}});
+  c.inventory.push({id:'gloves-test',name:'Перчатки лучника',qty:1,equipped:true,effects:{attack:1,damage:2,weaponScope:'ranged'}});
+  c.inventory.push({id:'belt-test',name:'Пояс фехтовальщика',qty:1,equipped:true,effects:{attack:3,damage:4,weaponScope:'melee'}});
   const state=derive(c,d);
   assert.equal(state.itemBonuses.attack,0);
   assert.equal(state.itemBonuses.damage,0);
+  assert.equal(state.itemBonuses.rangedAttack,1);
+  assert.equal(state.itemBonuses.rangedDamage,2);
+  assert.equal(state.itemBonuses.meleeAttack,3);
+  assert.equal(state.itemBonuses.meleeDamage,4);
   assert.equal(state.weaponItems.length,1);
   assert.equal(state.weaponItems[0].id,'blade-test');
 });

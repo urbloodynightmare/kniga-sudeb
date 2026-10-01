@@ -150,11 +150,13 @@ export function derive(c,d,validationPass=0){
     else traits.set(f.id,{...f,source:'Добавлено вручную',level:1});
   }
   const equippedItems=[...s.equipment,...(c.inventory||[])].map(item=>({...item,...(c.itemOverrides?.[item.id]||{})})).filter(item=>!item.removed&&Number(item.qty)>0&&item.equipped);
-  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0};s.weaponItems=[];s.advantageChecks=new Set();
+  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0,meleeAttack:0,meleeDamage:0,rangedAttack:0,rangedDamage:0};s.weaponItems=[];s.advantageChecks=new Set();
   for(const item of equippedItems){
     const effects=item.effects||{};
     for(const key of ['ac','spellAttack','spellDC','spellSave'])s.itemBonuses[key]+=Number(effects[key])||0;
     if(effects.weaponScope==='self')s.weaponItems.push(item);
+    else if(effects.weaponScope==='melee'){s.itemBonuses.meleeAttack+=Number(effects.attack)||0;s.itemBonuses.meleeDamage+=Number(effects.damage)||0;}
+    else if(effects.weaponScope==='ranged'){s.itemBonuses.rangedAttack+=Number(effects.attack)||0;s.itemBonuses.rangedDamage+=Number(effects.damage)||0;}
     else {s.itemBonuses.attack+=Number(effects.attack)||0;s.itemBonuses.damage+=Number(effects.damage)||0;}
     if(effects.ability&&STATS[effects.ability])s.stats[effects.ability]=Math.min(30,s.stats[effects.ability]+(Number(effects.abilityBonus)||0));
     if(typeof effects.advantage==='string'&&effects.advantage)s.advantageChecks.add(effects.advantage);
