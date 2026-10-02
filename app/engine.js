@@ -166,7 +166,7 @@ export function derive(c,d,validationPass=0){
   }
   s.mods=Object.fromEntries(Object.entries(s.stats).map(([k,v])=>[k,mod(v)]));
   const vars={LVL:level,PROF:prof,...Object.fromEntries(Object.entries(s.mods).map(([k,v])=>[k.toUpperCase(),v]))};
-  const bonuses={};for(const b of s.bonuses){try{if(b.target==='ac'&&!s.equippedArmorType)continue;bonuses[b.target]=(bonuses[b.target]||0)+(b.expr?expression(b.expr,vars):(b.value||0));}catch{s.warnings.push('Не удалось посчитать '+b.label);}}
+  const bonuses={};for(const b of s.bonuses){try{if(b.target==='ac'&&(!s.equippedArmorType||s.equippedArmorType==='clothing'))continue;bonuses[b.target]=(bonuses[b.target]||0)+(b.expr?expression(b.expr,vars):(b.value||0));}catch{s.warnings.push('Не удалось посчитать '+b.label);}}
   s.traits=[...traits.values()];s.resources=[...resources.values()].map(r=>({...r,max:Math.max(0,Math.floor(r.maxExpr?expression(r.maxExpr,vars):r.max||0))}));
   s.resources.forEach(r=>{r.remaining=clamp(c.spent[r.id]===undefined?(r.id==='elation-ardor'?0:r.max):r.max-c.spent[r.id],0,r.max);});
   s.hpMax=Math.max(1,s.die+s.mods.con+(level-1)*Math.max(1,s.die/2+1+s.mods.con)+(bonuses['hp.max']||0)+(Number(c.hpBonus)||0));
