@@ -60,6 +60,17 @@ test('duplicate non-repeatable invocations do not add duplicate features',()=>{
   const c=warlock(4),qs=invocations(derive(c,d));for(const q of qs)c.choices[q.key]=0;
   const s=derive(c,d);assert.ok(s.feats.filter(f=>f.id==='inv-armor-of-shadows').length<=1);assert.ok(s.pending>0);
 });
+test('Eldritch Blast invocations expose their linked combat effects',()=>{
+  const c=warlock(4),qs=invocations(derive(c,d));
+  const select=(q,id)=>{c.choices[q.key]=q.options.findIndex(o=>o.grants.some(g=>g.featId===id));};
+  select(qs[0],'inv-agonizing-blast');select(qs[1],'inv-repelling-blast');
+  let state=derive(c,d);
+  for(const q of state.choices.filter(q=>q.type==='spell-choice'&&q.targetOnly))c.choices[q.key]=['eldritch-blast'];
+  state=derive(c,d);
+  assert.deepEqual(state.spellEnhancements['eldritch-blast'].map(x=>x.id).sort(),['inv-agonizing-blast','inv-repelling-blast']);
+  assert.match(state.spellEnhancements['eldritch-blast'][0].effect,/Харизмы/);
+  assert.match(state.spellEnhancements['eldritch-blast'][1].effect,/10 футов/);
+});
 test('ASI does not silently exceed 20',()=>{
   const c=warlock(4);c.stats.cha=20;let s=derive(c,d);const q=s.choices.find(x=>x.label==='Общая черта или улучшение характеристик');c.choices[q.key]=0;s=derive(c,d);const asi=s.choices.find(q=>q.type==='asi-flexible');c.choices[asi.key]={cha:2};s=derive(c,d);assert.equal(s.stats.cha,20);assert.equal(s.choices.find(x=>x.key===asi.key).complete,false);
 });

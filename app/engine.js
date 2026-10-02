@@ -203,6 +203,17 @@ export function derive(c,d,validationPass=0){
     corrected.pending=corrected.choices.filter(q=>!q.complete).length;
     return corrected;
   }
+  s.spellEnhancements={};
+  for(const feat of s.feats.filter(f=>['inv-agonizing-blast','inv-repelling-blast'].includes(f.id))){
+    const targetChoice=s.choices.find(q=>q.type==='spell-choice'&&q.targetOnly&&q.key.startsWith(feat.key+'/feat-'+feat.id));
+    // Saves created before invocation targets were introduced have no stored target.
+    // These two classic invocations historically modified Eldritch Blast, so keep them useful and visible.
+    const targets=(Array.isArray(targetChoice?.value)&&targetChoice.value.length?targetChoice.value:['eldritch-blast']);
+    const effect=feat.id==='inv-agonizing-blast'
+      ?`Добавляйте модификатор Харизмы (${signed(s.mods.cha)}) к каждому броску урона.`
+      :'При попадании можете оттолкнуть цель Большого размера или меньше на 10 футов.';
+    for(const spellId of targets)(s.spellEnhancements[spellId]??=[]).push({id:feat.id,name:cleanName(feat.label),effect,source:feat.label});
+  }
   s.pending=s.choices.filter(q=>!q.complete).length;
   return s;
 }
