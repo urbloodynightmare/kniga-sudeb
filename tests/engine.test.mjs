@@ -158,3 +158,12 @@ test('2024 spell lists are complete for every spellcasting class in the party',(
   }
   assert.ok(spells.some(spell=>spell.id==='thunderclap'&&spell.classes.includes('wizard')));
 });
+test('ordinary spell descriptions do not contain neighboring creature stat blocks',()=>{
+  const spells=JSON.parse(fs.readFileSync(new URL('../data/spells.json',import.meta.url)));
+  for(const id of ['fireball','antipathysympathy']){
+    const spell=spells.find(item=>item.id===id);
+    assert.ok(spell);
+    assert.doesNotMatch(spell.description,/MOD SAVE|CR None|Otherworldly Steed|Animated Object/);
+    assert.doesNotMatch(spell.descriptionRu,/MOD SAVE|CR Нет|Потусторонний скакун|Оживленный Объект/);
+  }
+});
