@@ -162,7 +162,8 @@ export function derive(c,d,validationPass=0){
     else {s.itemBonuses.attack+=Number(effects.attack)||0;s.itemBonuses.damage+=Number(effects.damage)||0;}
     if(effects.ability&&STATS[effects.ability])s.stats[effects.ability]=Math.min(30,s.stats[effects.ability]+(Number(effects.abilityBonus)||0));
     if(typeof effects.advantage==='string'&&effects.advantage)s.advantageChecks.add(effects.advantage);
-    if(item.imbuedSpell?.id&&Number(item.imbuedSpell.uses)>0)s.fixedSpells.push({type:'spell-fixed',slug:item.imbuedSpell.id,source:item.name,itemId:item.id,uses:Number(item.imbuedSpell.uses),rest:item.imbuedSpell.rest||'long',key:'item-spell:'+item.id});
+    const legacyImbued=!Array.isArray(item.imbuedSpells),imbuedSpells=legacyImbued?(item.imbuedSpell?.id?[item.imbuedSpell]:[]):item.imbuedSpells;
+    for(const magic of imbuedSpells)if(magic?.id&&Number(magic.uses)>0)s.fixedSpells.push({type:'spell-fixed',slug:magic.id,source:item.name,itemId:item.id,uses:Number(magic.uses),rest:magic.rest||'long',key:'item-spell:'+item.id+(legacyImbued?'':':'+magic.id)});
   }
   s.mods=Object.fromEntries(Object.entries(s.stats).map(([k,v])=>[k,mod(v)]));
   const vars={LVL:level,PROF:prof,...Object.fromEntries(Object.entries(s.mods).map(([k,v])=>[k.toUpperCase(),v]))};
@@ -226,7 +227,7 @@ export function rest(c,s,long){
     else if(!long&&r.isShortRest)next.spent[r.id]=r.shortRestRegain?Math.max(0,(next.spent[r.id]||0)-Number(r.shortRestRegain)):0;
   }
   if(long||s.casting?.progression==='pact')s.slots.forEach(slot=>next.spent[slot.id]=0);
-  for(const item of [...s.equipment,...(next.inventory||[])].map(entry=>({...entry,...(next.itemOverrides?.[entry.id]||{})})))if(item.imbuedSpell?.id&&(long||item.imbuedSpell.rest==='short'))next.spent['item-spell:'+item.id]=0;
+  for(const item of [...s.equipment,...(next.inventory||[])].map(entry=>({...entry,...(next.itemOverrides?.[entry.id]||{})}))){const legacy=!Array.isArray(item.imbuedSpells),magicList=legacy?(item.imbuedSpell?.id?[item.imbuedSpell]:[]):item.imbuedSpells;for(const magic of magicList)if(magic?.id&&(long||magic.rest==='short'))next.spent['item-spell:'+item.id+(legacy?'':':'+magic.id)]=0;}
   if(long){next.damage=0;next.tempHp=0;next.spent['hit-dice']=0;for(const k of Object.keys(next.spent))if(k.startsWith('free-spell:'))next.spent[k]=0;if(next.raceId==='human')next.inspiration=true;}
   return next;
 }

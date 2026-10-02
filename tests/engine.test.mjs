@@ -103,6 +103,22 @@ test('equipped magic items apply bonuses, grant spells, and recover charges',()=
   assert.equal(derive(c,d).advantageChecks.size,0);
 });
 
+test('one equipped item can grant several independently tracked spells',()=>{
+  const c=warlock(3);
+  const ids=['eldritch-blast','fireball'];
+  c.inventory.push({id:'staff-many-spells',name:'Посох многих чар',qty:1,equipped:true,effects:{},imbuedSpells:[{id:ids[0],uses:2,rest:'short'},{id:ids[1],uses:1,rest:'long'}]});
+  const state=derive(c,d);
+  assert.equal(state.fixedSpells.some(x=>x.slug===ids[0]&&x.key==='item-spell:staff-many-spells:'+ids[0]&&x.uses===2),true);
+  assert.equal(state.fixedSpells.some(x=>x.slug===ids[1]&&x.key==='item-spell:staff-many-spells:'+ids[1]&&x.uses===1),true);
+  c.spent['item-spell:staff-many-spells:'+ids[0]]=2;
+  c.spent['item-spell:staff-many-spells:'+ids[1]]=1;
+  const afterShort=rest(c,state,false);
+  assert.equal(afterShort.spent['item-spell:staff-many-spells:'+ids[0]],0);
+  assert.equal(afterShort.spent['item-spell:staff-many-spells:'+ids[1]],1);
+  const afterLong=rest(c,state,true);
+  assert.equal(afterLong.spent['item-spell:staff-many-spells:'+ids[1]],0);
+});
+
 test('equipped items can grant advantage to saving throws and individual skills',()=>{
   const c=warlock(4);
   c.inventory.push({id:'cloak-test',name:'Плащ испытаний',qty:1,equipped:true,effects:{advantage:'saves'}});
