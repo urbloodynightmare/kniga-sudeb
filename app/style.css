@@ -94,3 +94,6 @@ dialog.creation-dialog,dialog.levelup-dialog{width:min(980px,calc(100vw - 32px))
 
 .editor-save-hint{margin-left:auto;font:9px 'Golos Text',sans-serif;color:#7c8c78;white-space:nowrap}
 @media(max-width:650px){.story-title{flex-wrap:wrap}.editor-save-hint{width:100%;margin:-5px 0 2px 36px;font-size:9px}}
+
+/* Character cards need a full row on phone screens: three combat stats cannot fit a half-width tile. */
+@media(max-width:650px){.character-grid{grid-template-columns:1fr}.character-card{min-width:0}.character-card .card-top{height:108px;padding:20px 18px 0}.character-card .card-content{padding:17px 18px 0}.character-card .card-stats{gap:4px}.character-card .card-stats small{white-space:normal;line-height:1.3;min-height:23px}.add-card{min-height:190px}}
