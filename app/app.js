@@ -1,6 +1,6 @@
-import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20261002-11';
-import {spellNames} from './spell-names.js?v=20261002-11';
-import {cloud} from './cloud.js?v=20261002-11';
+import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20261002-12';
+import {spellNames} from './spell-names.js?v=20261002-12';
+import {cloud} from './cloud.js?v=20261002-12';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function safeRich(value){const source=String(value??''),hasMarkup=/<\/?(?:b|strong|i|em|u|s|strike|ul|ol|li|p|div|br|h3|blockquote)\b/i.test(source),template=document.createElement('template');template.innerHTML=hasMarkup?source:esc(source).replace(/\n/g,'<br>');const allowed=new Set(['B','STRONG','I','EM','U','S','STRIKE','UL','OL','LI','P','DIV','BR','H3','BLOCKQUOTE']);for(const node of [...template.content.querySelectorAll('*')]){if(!allowed.has(node.tagName))node.replaceWith(...node.childNodes);else for(const attr of [...node.attributes])node.removeAttribute(attr.name);}return template.innerHTML;}
 const ICONS={party:'◈',sheet:'▤',growth:'✧',spells:'✦',inventory:'◇',story:'♧',notes:'☷',library:'⌕',rules:'⊙'};
@@ -47,8 +47,8 @@ const opt=(value,label,selectedValue,extra='')=>`<option value="${esc(value)}" $
 const btn=(label,action,cls='',extra='')=>`<button class="button ${cls}" data-action="${action}" ${extra}>${label}</button>`;
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('visible'),4000);}
 function save(){try{localStorage.setItem(storageKey(),JSON.stringify(state));if(cloud.user&&!loadingAccount)cloud.enqueue(state);$('#save-status')?.classList.remove('failed');return true;}catch{$('#save-status')?.classList.add('failed');toast('Не удалось сохранить в браузере. Скачайте резервную копию.');return false;}}
-function saveView(){try{localStorage.setItem(viewStorageKey(),JSON.stringify({page,section,selected,libraryKind,spellFilter}));}catch{}}
-function restoreView(){try{const saved=JSON.parse(localStorage.getItem(viewStorageKey())||'null');if(!saved)return;page=['party','character','library','journal'].includes(saved.page)?saved.page:'party';section=['sheet','growth','spells','inventory','story','notes'].includes(saved.section)?saved.section:'sheet';libraryKind=['spells','feats'].includes(saved.libraryKind)?saved.libraryKind:'spells';spellFilter=saved.spellFilter||'all';selected=state.characters.some(c=>c.id===saved.selected)?saved.selected:state.characters[0]?.id;if(page==='character'&&!selected)page='party';}catch{page='party';selected=state.characters[0]?.id;}}
+function saveView(){try{localStorage.setItem(viewStorageKey(),JSON.stringify({page,section,selected,libraryKind,spellFilter,collapsedContainers:[...collapsedContainers]}));}catch{}}
+function restoreView(){try{const saved=JSON.parse(localStorage.getItem(viewStorageKey())||'null');if(!saved)return;page=['party','character','library','journal'].includes(saved.page)?saved.page:'party';section=['sheet','growth','spells','inventory','story','notes'].includes(saved.section)?saved.section:'sheet';libraryKind=['spells','feats'].includes(saved.libraryKind)?saved.libraryKind:'spells';spellFilter=saved.spellFilter||'all';collapsedContainers.clear();for(const id of Array.isArray(saved.collapsedContainers)?saved.collapsedContainers:[])if(typeof id==='string')collapsedContainers.add(id);selected=state.characters.some(c=>c.id===saved.selected)?saved.selected:state.characters[0]?.id;if(page==='character'&&!selected)page='party';}catch{page='party';selected=state.characters[0]?.id;}}
 function mutate(fn,{rerender=true,undo=true}={}){if(undo)undoSnapshot=structuredClone(state);fn();save();if(rerender)render();}
 function download(name,data){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
 function exportChars(chars=state.characters){download('kniga-sudeb-'+new Date().toISOString().slice(0,10)+'.json',{format:'book-of-fates',version:1,datasetId:dataset.id,characters:chars,journal:state.journal||''});toast('Резервная копия скачана');}
@@ -244,7 +244,7 @@ document.addEventListener('click',async e=>{
   if(a==='item-slot-equip'){mutate(()=>{c.itemOverrides??={};const target=allCharacterItems(c,s).find(item=>item.id===el.dataset.id);unequipConflictingItems(c,s,el.dataset.id,el.dataset.slot,target);c.itemOverrides[el.dataset.id]={...(c.itemOverrides[el.dataset.id]||{}),equipped:true,equipmentSlot:el.dataset.slot};});$('#dialog').close();toast(`Предмет надет: ${EQUIPMENT_SLOTS[el.dataset.slot]?.[0]||'экипировка'}`);return;}
   if(a==='item-slot-clear'){mutate(()=>{c.itemOverrides??={};c.itemOverrides[el.dataset.id]={...(c.itemOverrides[el.dataset.id]||{}),equipped:false};});$('#dialog').close();toast('Предмет снят');return;}
   if(a==='item-add'||a==='item-edit')return itemForm(el.dataset.id);
-  if(a==='container-toggle'){collapsedContainers.has(el.dataset.id)?collapsedContainers.delete(el.dataset.id):collapsedContainers.add(el.dataset.id);render();return;}
+  if(a==='container-toggle'){collapsedContainers.has(el.dataset.id)?collapsedContainers.delete(el.dataset.id):collapsedContainers.add(el.dataset.id);saveView();render();return;}
   if(a==='item-spell-select'){const input=$('#item-spell-id');if(input){input.value=el.dataset.id;renderItemSpellPicker();}return;}
   if(a==='item-spell-clear'){const input=$('#item-spell-id');if(input){input.value='';renderItemSpellPicker();}return;}
   if(a==='item-save'){const value=itemFormValue(el.closest('form'));if(!value.name||!Number.isInteger(value.qty)||value.qty<0||value.qty>9999)return toast('Проверьте название и количество предмета');if(value.itemType==='armor'&&!value.effects.armorType)return toast('Выберите вид доспеха');let autoSlot='';mutate(()=>autoSlot=saveItemValue(c,s,value));$('#dialog').close();if(autoSlot)toast(`Предмет автоматически надет: ${EQUIPMENT_SLOTS[autoSlot][0]}`);else if(!value.equipped&&(ITEM_TYPE_SLOTS[value.itemType]||[]).length)replacementDialog(value.id);else toast('Предмет и его эффекты сохранены');return;}
@@ -307,7 +307,7 @@ $('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog'
 $('#dialog').addEventListener('close',()=>render());
 window.addEventListener('storage',e=>{if(e.key===storageKey()){toast('Листы изменены в другой вкладке. Обновите страницу перед редактированием.');}});
 try{
-  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261002-11').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261002-11').then(r=>r.json())]);
+  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261002-12').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261002-12').then(r=>r.json())]);
   const stored=localStorage.getItem(STORE);state=stored?JSON.parse(stored):{characters:partyTemplates(),journal:''};
   if(!Array.isArray(state.characters))throw Error('Повреждено сохранение. Скачайте данные браузера перед сбросом.');
   dataset=normalizeDataset(state.dataset||rawDataset);selected=state.characters[0]?.id;
