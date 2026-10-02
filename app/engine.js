@@ -150,10 +150,11 @@ export function derive(c,d,validationPass=0){
     else traits.set(f.id,{...f,source:'Добавлено вручную',level:1});
   }
   const equippedItems=[...s.equipment,...(c.inventory||[])].map(item=>({...item,...(c.itemOverrides?.[item.id]||{})})).filter(item=>!item.removed&&Number(item.qty)>0&&item.equipped);
-  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0,meleeAttack:0,meleeDamage:0,rangedAttack:0,rangedDamage:0};s.weaponItems=[];s.advantageChecks=new Set();
+  s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0,meleeAttack:0,meleeDamage:0,rangedAttack:0,rangedDamage:0};s.weaponItems=[];s.advantageChecks=new Set();s.equippedArmorType='';
   for(const item of equippedItems){
     const effects=item.effects||{};
     if(item.itemType==='shield')s.itemBonuses.ac+=2;
+    if(item.itemType==='armor'&&effects.armorType)s.equippedArmorType=effects.armorType;
     for(const key of ['ac','spellAttack','spellDC','spellSave'])s.itemBonuses[key]+=Number(effects[key])||0;
     if(effects.weaponScope==='self')s.weaponItems.push(item);
     else if(effects.weaponScope==='melee'){s.itemBonuses.meleeAttack+=Number(effects.attack)||0;s.itemBonuses.meleeDamage+=Number(effects.damage)||0;}
@@ -165,15 +166,15 @@ export function derive(c,d,validationPass=0){
   }
   s.mods=Object.fromEntries(Object.entries(s.stats).map(([k,v])=>[k,mod(v)]));
   const vars={LVL:level,PROF:prof,...Object.fromEntries(Object.entries(s.mods).map(([k,v])=>[k.toUpperCase(),v]))};
-  const bonuses={};for(const b of s.bonuses){try{if(b.target==='ac'&&c.armor==='none')continue;bonuses[b.target]=(bonuses[b.target]||0)+(b.expr?expression(b.expr,vars):(b.value||0));}catch{s.warnings.push('Не удалось посчитать '+b.label);}}
+  const bonuses={};for(const b of s.bonuses){try{if(b.target==='ac'&&!s.equippedArmorType)continue;bonuses[b.target]=(bonuses[b.target]||0)+(b.expr?expression(b.expr,vars):(b.value||0));}catch{s.warnings.push('Не удалось посчитать '+b.label);}}
   s.traits=[...traits.values()];s.resources=[...resources.values()].map(r=>({...r,max:Math.max(0,Math.floor(r.maxExpr?expression(r.maxExpr,vars):r.max||0))}));
   s.resources.forEach(r=>{r.remaining=clamp(c.spent[r.id]===undefined?(r.id==='elation-ardor'?0:r.max):r.max-c.spent[r.id],0,r.max);});
   s.hpMax=Math.max(1,s.die+s.mods.con+(level-1)*Math.max(1,s.die/2+1+s.mods.con)+(bonuses['hp.max']||0)+(Number(c.hpBonus)||0));
   s.hp=clamp(s.hpMax-c.damage,0,s.hpMax);
   s.initiative=s.mods.dex+(bonuses.initiative||0);s.speed+=bonuses['speed.walk']||0;
-  const armor={none:10+s.mods.dex,leather:11+s.mods.dex,studded:12+s.mods.dex,hide:12+Math.min(2,s.mods.dex),'chain-shirt':13+Math.min(2,s.mods.dex),scale:14+Math.min(2,s.mods.dex),breastplate:14+Math.min(2,s.mods.dex),'half-plate':15+Math.min(2,s.mods.dex),ring:14,chain:16,splint:17,plate:18};
-  s.ac=(armor[c.armor]??armor.none)+(c.shield?2:0)+(bonuses.ac||0)+(Number(c.acBonus)||0)+s.itemBonuses.ac;
-  if(c.mageArmor&&c.armor==='none')s.ac=13+s.mods.dex+(c.shield?2:0)+(Number(c.acBonus)||0)+s.itemBonuses.ac;
+  const armor={leather:11+s.mods.dex,studded:12+s.mods.dex,hide:12+Math.min(2,s.mods.dex),'chain-shirt':13+Math.min(2,s.mods.dex),scale:14+Math.min(2,s.mods.dex),breastplate:14+Math.min(2,s.mods.dex),'half-plate':15+Math.min(2,s.mods.dex),ring:14,chain:16,splint:17,plate:18};
+  const unarmored=c.mageArmor?13+s.mods.dex:10+s.mods.dex;
+  s.ac=(armor[s.equippedArmorType]??unarmored)+(bonuses.ac||0)+s.itemBonuses.ac;
   s.skillBonuses=Object.fromEntries(Object.entries(SKILLS).map(([k,[,stat]])=>[k,s.mods[stat]+(s.skills.has(k)?prof:0)+(s.expertise.has(k)&&s.skills.has(k)?prof:0)+(bonuses['skill.'+k]||0)]));
   s.passive=10+s.skillBonuses.perception;
   s.saveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.mods[k]+(s.saves.has(k)?prof:0)]));

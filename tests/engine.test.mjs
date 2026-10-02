@@ -46,8 +46,10 @@ test('backup round trip validates input and assigns fresh IDs',()=>{
   assert.throws(()=>validateSave({format:'book-of-fates',version:1,characters:[{...c,level:99}]},d));
 });
 test('conditional Defense fighting style and Mage Armor calculations',()=>{
-  const c=warlock(4);c.manualFeatures.push({id:'defense',featId:'fs-defense'});c.armor='none';assert.equal(derive(c,d).ac,12);
-  c.mageArmor=true;assert.equal(derive(c,d).ac,15);c.armor='leather';assert.equal(derive(c,d).ac,14);
+  const c=warlock(4);c.manualFeatures.push({id:'defense',featId:'fs-defense'});assert.equal(derive(c,d).ac,12);
+  c.mageArmor=true;assert.equal(derive(c,d).ac,15);
+  c.inventory.push({id:'armor-test',name:'Кожаный доспех',qty:1,equipped:true,equipmentSlot:'armor',itemType:'armor',effects:{armorType:'leather'}});
+  assert.equal(derive(c,d).ac,14);
 });
 test('long rest resets accumulated Aha ardor to zero',()=>{
   const c=warlock(4);c.spent['elation-ardor']=0;const r=rest(c,derive(c,d),true);assert.equal(derive(r,d).resources.find(x=>x.id==='elation-ardor').remaining,0);
