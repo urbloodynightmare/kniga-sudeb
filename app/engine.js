@@ -153,6 +153,7 @@ export function derive(c,d,validationPass=0){
   s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0,meleeAttack:0,meleeDamage:0,rangedAttack:0,rangedDamage:0};s.weaponItems=[];s.advantageChecks=new Set();
   for(const item of equippedItems){
     const effects=item.effects||{};
+    if(item.itemType==='shield')s.itemBonuses.ac+=2;
     for(const key of ['ac','spellAttack','spellDC','spellSave'])s.itemBonuses[key]+=Number(effects[key])||0;
     if(effects.weaponScope==='self')s.weaponItems.push(item);
     else if(effects.weaponScope==='melee'){s.itemBonuses.meleeAttack+=Number(effects.attack)||0;s.itemBonuses.meleeDamage+=Number(effects.damage)||0;}

@@ -93,6 +93,18 @@ test('equipped items can grant advantage to saving throws and individual skills'
   assert.equal(state.advantageChecks.has('skill:perception'),true);
 });
 
+test('equipment slots apply shields and remove weapon attacks when unequipped',()=>{
+  const c=warlock(4),base=derive(c,d);
+  c.inventory.push({id:'shield-slot',name:'Щит стража',qty:1,equipped:true,equipmentSlot:'meleeOff',itemType:'shield',effects:{ac:1}});
+  c.inventory.push({id:'sword-slot',name:'Длинный меч +1',qty:1,equipped:true,equipmentSlot:'meleeMain',itemType:'meleeWeapon',effects:{weaponScope:'self',weaponType:'longsword',attack:1,damage:1}});
+  let state=derive(c,d);
+  assert.equal(state.ac,base.ac+3);
+  assert.equal(state.weaponItems.some(x=>x.id==='sword-slot'),true);
+  c.inventory[1].equipped=false;
+  state=derive(c,d);
+  assert.equal(state.weaponItems.some(x=>x.id==='sword-slot'),false);
+});
+
 test('weapon bonuses can target one equipped weapon without affecting every attack',()=>{
   const c=warlock(4);
   c.inventory.push({id:'blade-test',name:'Рапира дуэлянта',qty:1,equipped:true,effects:{attack:2,damage:1,weaponScope:'self',weaponType:'rapier'}});
