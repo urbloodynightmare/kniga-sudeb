@@ -14,7 +14,7 @@ test('conflicts preserve local edits and block automatic overwrite',async()=>{
 });
 test('network errors can be retried without dropping pending data',async()=>{
   let attempt=0;const q=new SaveQueue(async(_,rev)=>{if(!attempt++)throw Error('offline');return rev+1;});
-  q.enqueue({note:'persist'});await q.flush();assert.equal(q.pending.note,'persist');await q.retry();assert.equal(q.pending,null);assert.equal(q.revision,1);clearTimeout(q.timer);
+  const statuses=[];q.onStatus=s=>statuses.push(s);q.enqueue({note:'persist'});await q.flush();assert.equal(q.pending.note,'persist');assert.equal(q.blocked,false);assert.equal(statuses.at(-1),'error');await q.retry();assert.equal(q.pending,null);assert.equal(q.revision,1);clearTimeout(q.timer);
 });
 test('switching accounts resets pending data and revision',async()=>{
   const q=new SaveQueue(async(_,rev)=>rev+1);q.enqueue({note:'private'});q.reset(9);assert.equal(q.pending,null);assert.equal(q.revision,9);assert.equal(q.blocked,false);
