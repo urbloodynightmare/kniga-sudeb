@@ -1,0 +1,81 @@
+-- Run AFTER rooms.sql, or concatenate inside its transaction before COMMIT.
+-- Creates disposable users/rooms inside a transaction and rolls them back.
+begin;
+create temporary table room_test_context(owner_id uuid,player_id uuid,stranger_id uuid,room_id uuid,note_id uuid,code text);
+insert into room_test_context(owner_id,player_id,stranger_id) values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid());
+grant all on room_test_context to authenticated;
+insert into auth.users(id) select owner_id from room_test_context union all select player_id from room_test_context union all select stranger_id from room_test_context;
+select set_config('request.jwt.claim.sub',owner_id::text,true) from room_test_context;
+set local role authenticated;
+do $$ declare t record; rid uuid; saved jsonb; begin
+ select * into t from room_test_context;
+ rid:=public.create_party_room('QA room','QA master');
+ update room_test_context set room_id=rid;
+ update room_test_context set code=(public.list_party_rooms()->0->>'invite_code');
+ if public.list_party_rooms()->0->>'master_id'<>t.owner_id::text then raise exception 'FAIL initial master'; end if;
+ saved:=public.save_party_note(rid,null,'Session','First',0);
+ update room_test_context set note_id=(saved->>'id')::uuid;
+ if (select count(*) from public.party_notes where room_id=rid)<>1 then raise exception 'FAIL owner notes'; end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',stranger_id::text,true) from room_test_context;
+set local role authenticated;
+do $$ declare t record; denied boolean:=false; begin
+ select * into t from room_test_context;
+ if public.list_party_rooms()<>'[]'::jsonb then raise exception 'FAIL stranger rooms'; end if;
+ if exists(select 1 from public.party_notes where room_id=t.room_id) then raise exception 'FAIL stranger notes'; end if;
+ if exists(select 1 from public.party_note_history where note_id=t.note_id) then raise exception 'FAIL stranger history'; end if;
+ begin perform public.save_party_note(t.room_id,null,'Bad','No',0); exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL stranger writes'; end if;
+ denied:=false;
+ begin perform public.party_character_sheets(t.room_id);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL stranger sheets'; end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from room_test_context;
+set local role authenticated;
+do $$ declare t record; denied boolean:=false; saved jsonb; begin
+ select * into t from room_test_context;
+ perform public.join_party_room(t.code,'QA player');
+ if public.list_party_rooms()->0->>'invite_code' is not null then raise exception 'FAIL player invite secrecy'; end if;
+ if (select count(*) from public.party_members where room_id=t.room_id)<>2 then raise exception 'FAIL member list'; end if;
+ saved:=public.save_party_note(t.room_id,t.note_id,'Session','Player edit',1);
+ if (saved->>'revision')::bigint<>2 then raise exception 'FAIL revision'; end if;
+ begin perform public.save_party_note(t.room_id,t.note_id,'Stale','Stale',1);exception when others then if sqlerrm='REVISION_CONFLICT' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL conflict'; end if;
+ if (select count(*) from public.party_note_history where note_id=t.note_id)<>2 then raise exception 'FAIL history'; end if;
+ denied:=false;
+ begin perform public.change_party_master(t.room_id,t.player_id);exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL self promote'; end if;
+ perform public.save_player_book('{"characters":[{"id":"qa","name":"QA hero"}],"journal":"PRIVATE"}'::jsonb,0);
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',owner_id::text,true) from room_test_context;
+set local role authenticated;
+do $$ declare t record; books jsonb; denied boolean:=false; begin
+ select * into t from room_test_context;
+ books:=public.party_character_sheets(t.room_id);
+ if jsonb_array_length(books)<>2 then raise exception 'FAIL master read'; end if;
+ if books::text like '%PRIVATE%' then raise exception 'FAIL private journal leak'; end if;
+ if exists(select 1 from public.player_books where user_id=t.player_id) then raise exception 'FAIL private book RLS'; end if;
+ perform public.change_party_master(t.room_id,t.player_id);
+ if public.list_party_rooms()->0->>'master_id'<>t.player_id::text then raise exception 'FAIL transfer'; end if;
+ begin perform public.party_character_sheets(t.room_id);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL former master'; end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from room_test_context;
+set local role authenticated;
+do $$ declare t record; denied boolean:=false; begin
+ select * into t from room_test_context;
+ perform public.party_character_sheets(t.room_id);
+ begin perform public.leave_party_room(t.room_id,t.player_id);exception when others then if sqlerrm='TRANSFER_MASTER_FIRST' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL master leave'; end if;
+ perform public.archive_party_note(t.room_id,t.note_id,2,true);
+ if not (select archived from public.party_notes where id=t.note_id) then raise exception 'FAIL archive';end if;
+ perform public.archive_party_note(t.room_id,t.note_id,3,false);
+ if (select archived from public.party_notes where id=t.note_id) then raise exception 'FAIL restore';end if;
+end $$;
+reset role;
+rollback;
+select 'PASS: room membership, isolated notes/history, single master, transfer, private books, revision conflict, archive and restore' as result;
