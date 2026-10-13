@@ -9,6 +9,8 @@ begin
   'id',c->'id','name',c->'name','level',c->'level','className',c->'className','subclassName',c->'subclassName',
   'hp',c->'hp','hpMax',c->'hpMax','tempHp',c->'tempHp','ac',c->'ac','initiative',c->'initiative','prof',c->'prof','speed',c->'speed','passive',c->'passive',
   'spellDC',c->'spellDC','spellAttack',c->'spellAttack','castingAbility',c->'castingAbility','updatedAt',c->'updatedAt','conditions',c->'conditions',
+  'skills',(select coalesce(jsonb_agg(jsonb_build_object('key',a->'key','label',a->'label','ability',a->'ability','bonus',a->'bonus','proficient',a->'proficient','expertise',a->'expertise')),'[]'::jsonb)
+    from jsonb_array_elements(case when jsonb_typeof(c->'skills')='array' then c->'skills' else '[]'::jsonb end) a),
   'abilities',(select coalesce(jsonb_agg(jsonb_build_object('key',a->'key','label',a->'label','score',a->'score','modifier',a->'modifier','save',a->'save')),'[]'::jsonb)
     from jsonb_array_elements(case when jsonb_typeof(c->'abilities')='array' then c->'abilities' else '[]'::jsonb end) a)
  )) from jsonb_array_elements(case when jsonb_typeof(b.data->'masterSummaries')='array' then b.data->'masterSummaries' else '[]'::jsonb end) c where c->>'id'=m.character_id),'[]'::jsonb),

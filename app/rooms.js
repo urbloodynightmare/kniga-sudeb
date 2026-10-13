@@ -1,4 +1,4 @@
-import {masterSummaryHtml} from './master-summary.js?v=20261013-08';
+import {masterSummaryHtml} from './master-summary.js?v=20261014-01';
 // Shared room state is separate from private player books and their save queue.
 export function createRooms({cloud,esc,safeRich,showDialog,toast,personalJournal,personalCharacters=()=>[],syncPersonal=async()=>{}}){
  let rooms=[],roomId='',members=[],notes=[],sheets=[],archives=[],error='',loading=false,channel=null,timer=null,userId=null,refreshing=false,refreshAgain=false,editor=null;

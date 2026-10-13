@@ -17,3 +17,19 @@ test('non-caster summary omits magic tiles and escapes player-controlled names',
  const html=masterSummaryHtml(summary,v=>String(v).replaceAll('<','&lt;').replaceAll('>','&gt;'));
  assert.ok(!html.includes('<script>'));assert.ok(!html.includes('Сл заклинаний'));assert.ok(html.includes('Спасбросок'));
 });
+test('master publishes all skills with derived proficiency, expertise and item bonuses',()=>{
+ const c=createCharacter({classId:'rogue',raceId:'human',level:4});
+ for(const q of derive(c,d).choices.filter(q=>q.type==='skill-choice'))c.choices[q.key]=['stealth',...(q.options==='any'?['perception','acrobatics','deception']:q.options||[]).filter(k=>k!=='stealth')].slice(0,q.count);
+ for(const q of derive(c,d).choices.filter(q=>q.type==='expertise-choice'))c.choices[q.key]=['stealth'];
+ c.inventory=[{id:'ring',name:'PRIVATE',qty:1,equipped:true,equipmentSlot:'ring1',effects:{ability:'dex',abilityBonus:2}}];
+ const s=derive(c,d),summary=masterSummary(c,d),skill=summary.skills.find(x=>x.key==='stealth');
+ assert.equal(summary.skills.length,18);assert.ok(skill.proficient);assert.ok(skill.expertise);
+ assert.equal(skill.bonus,s.mods.dex+2*s.prof);
+ for(const x of summary.skills)assert.equal(x.bonus,s.skillBonuses[x.key]);
+ const html=masterSummaryHtml(summary,String);assert.ok(html.includes('Скрытность'));assert.ok(html.includes('◆'));assert.ok(html.includes('+'+skill.bonus));
+ assert.ok(!JSON.stringify(summary).includes('PRIVATE'));
+});
+test('older summaries do not invent missing skills',()=>{
+ const summary=masterSummary(createCharacter({classId:'fighter',raceId:'human'}),d);delete summary.skills;
+ const html=masterSummaryHtml(summary,String);assert.ok(html.includes('открыть обновлённый сайт'));assert.ok(!html.includes('<tbody>'));
+});

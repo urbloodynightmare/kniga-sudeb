@@ -1,10 +1,10 @@
-import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20261013-08';
-import {spellNames} from './spell-names.js?v=20261013-08';
-import {cloud} from './cloud.js?v=20261013-08';
-import {createRooms} from './rooms.js?v=20261013-08';
-import {masterSummary} from './master-summary.js?v=20261013-08';
-import {createCombat} from './combat.js?v=20261013-08';
-import {createMerchants} from './merchants.js?v=20261013-08';
+import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20261014-01';
+import {spellNames} from './spell-names.js?v=20261014-01';
+import {cloud} from './cloud.js?v=20261014-01';
+import {createRooms} from './rooms.js?v=20261014-01';
+import {masterSummary} from './master-summary.js?v=20261014-01';
+import {createCombat} from './combat.js?v=20261014-01';
+import {createMerchants} from './merchants.js?v=20261014-01';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function safeRich(value){const source=String(value??''),hasMarkup=/<\/?(?:b|strong|i|em|u|s|strike|ul|ol|li|p|div|br|h3|blockquote)\b/i.test(source),template=document.createElement('template');template.innerHTML=hasMarkup?source:esc(source).replace(/\n/g,'<br>');const allowed=new Set(['B','STRONG','I','EM','U','S','STRIKE','UL','OL','LI','P','DIV','BR','H3','BLOCKQUOTE']);for(const node of [...template.content.querySelectorAll('*')]){if(!allowed.has(node.tagName))node.replaceWith(...node.childNodes);else for(const attr of [...node.attributes])node.removeAttribute(attr.name);}return template.innerHTML;}
 const ICONS={combat:'⚔',merchants:'⚖',party:'◈',sheet:'▤',growth:'✧',spells:'✦',inventory:'◇',story:'♧',notes:'☷',library:'⌕',rules:'⊙'};
@@ -335,7 +335,7 @@ $('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog'
 $('#dialog').addEventListener('close',()=>render());
 window.addEventListener('storage',e=>{if(e.key===storageKey()){toast('Листы изменены в другой вкладке. Обновите страницу перед редактированием.');}});
 try{
-  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261013-08').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261013-08').then(r=>r.json())]);
+  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261014-01').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261014-01').then(r=>r.json())]);
   const stored=localStorage.getItem(STORE);state=stored?JSON.parse(stored):{characters:partyTemplates(),journal:''};
   if(!Array.isArray(state.characters))throw Error('Повреждено сохранение. Скачайте данные браузера перед сбросом.');
   dataset=normalizeDataset(state.dataset||rawDataset);selected=state.characters[0]?.id;

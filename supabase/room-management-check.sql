@@ -16,7 +16,7 @@ select set_config('request.jwt.claim.sub',player_id::text,true) from room_manage
 set local role authenticated;
 do $$ declare t record;denied boolean:=false;begin
  select * into t from room_management_qa;perform public.join_party_room(t.code,'QA player');
- perform public.save_player_book('{"characters":[{"id":"hero-one"},{"id":"hero-two"}],"masterSummaries":[{"id":"hero-one","name":"ONE","hp":10},{"id":"hero-two","name":"TWO","hp":20}]}'::jsonb,0);
+ perform public.save_player_book('{"characters":[{"id":"hero-one"},{"id":"hero-two"}],"masterSummaries":[{"id":"hero-one","name":"ONE","hp":10},{"id":"hero-two","name":"TWO","hp":20,"skills":[{"key":"stealth","label":"Скрытность","ability":"dex","bonus":8,"proficient":true,"expertise":true,"privateNote":"SECRET"}]}]}'::jsonb,0);
  perform public.set_party_character(t.room_id,'hero-two');
  if public.list_party_rooms()->0->>'character_id'<>'hero-two' then raise exception 'FAIL selected hero';end if;
  begin perform public.set_party_character(t.room_id,'foreign-hero');exception when others then if sqlerrm='CHARACTER_NOT_OWNED' then denied:=true;else raise;end if;end;
@@ -32,6 +32,7 @@ do $$ declare t record;books jsonb;entry jsonb;archive jsonb;archived_note uuid;
  select * into t from room_management_qa;books:=public.party_character_sheets(t.room_id);
  select b into entry from jsonb_array_elements(books) b where b->>'user_id'=t.player_id::text;
  if jsonb_array_length(entry->'characters')<>1 or entry->'characters'->0->>'name'<>'TWO' then raise exception 'FAIL room hero filtering';end if;
+ if entry->'characters'->0->'skills'->0->>'bonus'<>'8' or entry->'characters'->0->'skills'->0 ? 'privateNote' then raise exception 'FAIL skill summary allowlist';end if;
  select id into archived_note from public.party_notes where room_id=t.room_id and title='Archived note';perform public.archive_party_note(t.room_id,archived_note,1,true);
  perform public.delete_party_room(t.room_id);
  if public.list_party_rooms()<>'[]'::jsonb then raise exception 'FAIL hidden deleted room';end if;
