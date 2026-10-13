@@ -61,3 +61,5 @@ node --test tests/*.test.mjs
 This work includes material from the System Reference Document 5.2.1 (“SRD 5.2.1”) by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under the Creative Commons Attribution 4.0 International License, available at https://creativecommons.org/licenses/by/4.0/legalcode.
 
 Файл `scripts/extract-spells.mjs` воспроизводит извлечение каталога из текстовой выгрузки PDF. Сайт не зависит от PDF или инструментов извлечения.
+
+В каждой комнате выбирается один собственный персонаж (или участие без героя). Переключение комнат сохраняет отдельные состояния свёрнутых блоков. При удалении комнаты её создателем все записи, включая архивные, сохраняются в личном дневнике каждого текущего участника отдельной копией.

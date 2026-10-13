@@ -1,4 +1,4 @@
--- Run AFTER rooms.sql and master-summary.sql, or inside a migration transaction.
+-- Run AFTER rooms.sql and room-management.sql, or inside a migration transaction.
 -- Creates disposable users/rooms inside a transaction and rolls them back.
 begin;
 create temporary table room_test_context(owner_id uuid,player_id uuid,stranger_id uuid,room_id uuid,note_id uuid,code text);
@@ -48,6 +48,7 @@ do $$ declare t record; denied boolean:=false; saved jsonb; begin
  begin perform public.change_party_master(t.room_id,t.player_id);exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
  if not denied then raise exception 'FAIL self promote'; end if;
  perform public.save_player_book('{"characters":[{"id":"qa","name":"QA hero","notes":"PRIVATE SHEET"}],"journal":"PRIVATE","masterSummaries":[{"id":"qa","name":"QA hero","hp":10,"notes":"PRIVATE SUMMARY","abilities":[{"key":"str","score":10,"notes":"PRIVATE ABILITY"}]}]}'::jsonb,0);
+ perform public.set_party_character(t.room_id,'qa');
 end $$;
 reset role;
 select set_config('request.jwt.claim.sub',owner_id::text,true) from room_test_context;

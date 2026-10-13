@@ -51,7 +51,7 @@ begin
  if auth.uid() is null then raise exception 'AUTH_REQUIRED'; end if;
  if length(trim(room_name)) not between 1 and 100 or length(trim(member_name)) not between 1 and 80 then raise exception 'INVALID_NAME'; end if;
  insert into public.party_rooms(name,owner_id,master_id) values(trim(room_name),auth.uid(),auth.uid()) returning id into room;
- insert into public.party_members values(room,auth.uid(),trim(member_name),now()); return room;
+ insert into public.party_members(room_id,user_id,display_name) values(room,auth.uid(),trim(member_name)); return room;
 end; $$;
 create or replace function public.join_party_room(code text,member_name text)
 returns uuid language plpgsql security definer set search_path='' as $$

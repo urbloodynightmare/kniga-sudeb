@@ -1,0 +1,63 @@
+-- Transactional integration checks; all test users, rooms and notes are rolled back.
+begin;
+create temporary table room_management_qa(owner_id uuid,player_id uuid,stranger_id uuid,room_id uuid,note_id uuid,code text);
+insert into room_management_qa(owner_id,player_id,stranger_id) values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid());
+grant all on room_management_qa to authenticated;
+insert into auth.users(id) select owner_id from room_management_qa union all select player_id from room_management_qa union all select stranger_id from room_management_qa;
+select set_config('request.jwt.claim.sub',owner_id::text,true) from room_management_qa;
+set local role authenticated;
+do $$ declare rid uuid;note jsonb;begin
+ rid:=public.create_party_room('QA delete room','QA owner');update room_management_qa set room_id=rid,code=public.list_party_rooms()->0->>'invite_code';
+ note:=public.save_party_note(rid,null,'Diary','KEEP DIARY',0);update room_management_qa set note_id=(note->>'id')::uuid;
+ perform public.save_party_note(rid,null,'Archived note','KEEP ARCHIVED',0);
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from room_management_qa;
+set local role authenticated;
+do $$ declare t record;denied boolean:=false;begin
+ select * into t from room_management_qa;perform public.join_party_room(t.code,'QA player');
+ perform public.save_player_book('{"characters":[{"id":"hero-one"},{"id":"hero-two"}],"masterSummaries":[{"id":"hero-one","name":"ONE","hp":10},{"id":"hero-two","name":"TWO","hp":20}]}'::jsonb,0);
+ perform public.set_party_character(t.room_id,'hero-two');
+ if public.list_party_rooms()->0->>'character_id'<>'hero-two' then raise exception 'FAIL selected hero';end if;
+ begin perform public.set_party_character(t.room_id,'foreign-hero');exception when others then if sqlerrm='CHARACTER_NOT_OWNED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL character ownership';end if;
+ denied:=false;begin perform public.delete_party_room(t.room_id);exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL member deletion';end if;
+ perform public.save_party_note(t.room_id,t.note_id,'Diary edited','KEEP EDIT',1);
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',owner_id::text,true) from room_management_qa;
+set local role authenticated;
+do $$ declare t record;books jsonb;entry jsonb;archive jsonb;archived_note uuid;begin
+ select * into t from room_management_qa;books:=public.party_character_sheets(t.room_id);
+ select b into entry from jsonb_array_elements(books) b where b->>'user_id'=t.player_id::text;
+ if jsonb_array_length(entry->'characters')<>1 or entry->'characters'->0->>'name'<>'TWO' then raise exception 'FAIL room hero filtering';end if;
+ select id into archived_note from public.party_notes where room_id=t.room_id and title='Archived note';perform public.archive_party_note(t.room_id,archived_note,1,true);
+ perform public.delete_party_room(t.room_id);
+ if public.list_party_rooms()<>'[]'::jsonb then raise exception 'FAIL hidden deleted room';end if;
+ select to_jsonb(a) into archive from public.room_diary_archives a where room_id=t.room_id;
+ if jsonb_array_length(archive->'notes')<>2 or jsonb_array_length(archive->'history')<>4 then raise exception 'FAIL diary archive complete';end if;
+ if archive::text not like '%KEEP EDIT%' or archive::text not like '%KEEP ARCHIVED%' then raise exception 'FAIL archived text';end if;
+ if exists(select 1 from public.party_notes where room_id=t.room_id) then raise exception 'FAIL deleted notes access';end if;
+ if exists(select 1 from public.room_diary_archives where user_id=t.player_id) then raise exception 'FAIL archive privacy';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from room_management_qa;
+set local role authenticated;
+do $$ declare t record;denied boolean:=false;begin
+ select * into t from room_management_qa;
+ if not exists(select 1 from public.room_diary_archives where room_id=t.room_id and user_id=t.player_id) then raise exception 'FAIL player diary copy';end if;
+ begin perform public.join_party_room(t.code,'Again');exception when others then if sqlerrm='INVITE_NOT_FOUND' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL deleted invite';end if;
+ denied:=false;begin perform public.save_party_note(t.room_id,null,'Late','Late',0);exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL late note write';end if;
+ perform public.save_player_book('{"characters":[],"journal":"old autosave"}'::jsonb,1);
+ if not exists(select 1 from public.room_diary_archives where room_id=t.room_id) then raise exception 'FAIL old autosave erased copy';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',stranger_id::text,true) from room_management_qa;
+set local role authenticated;
+do $$ begin if exists(select 1 from public.room_diary_archives) then raise exception 'FAIL stranger archive access';end if;end $$;
+reset role;
+rollback;
+select 'PASS: selected hero only, ownership checks, owner deletion, diary copies for all members, archive/history preservation, private copies, inactive invitation, autosave isolation' as result;
