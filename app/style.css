@@ -162,3 +162,5 @@ dialog.creation-dialog,dialog.levelup-dialog{width:min(980px,calc(100vw - 32px))
 @media(max-width:650px){.merchant-room{align-items:stretch;flex-direction:column;gap:14px}.merchant-room>label{max-width:none}.merchant-room .room-actions{display:grid;grid-template-columns:1fr}.merchant-card>header{flex-direction:column;gap:14px}.merchant-visibility{width:100%}.merchant-card{padding:18px!important}.merchant-table{font-size:11px}.merchant-table th{padding:10px 5px;font-size:9px}.merchant-table td{padding:12px 5px}.merchant-preview-fields{grid-template-columns:1fr}.merchant-preview-card{padding:10px}.merchant-table input{padding:8px 3px;font-size:11px}.merchant-economy>summary{flex-wrap:wrap}.merchant-search-label input{font-size:16px}.merchant-upload{padding:14px}}
 
 .merchant-table th:first-child,#merchant-preview .merchant-table th:first-child{width:65%}.merchant-table th:last-child,#merchant-preview .merchant-table th:last-child{width:35%}
+
+.merchant-price-choice{display:grid;gap:8px;margin:14px 0;font-size:12px}.merchant-price-choice select{width:100%;min-width:0;padding:11px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}

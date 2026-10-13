@@ -32,3 +32,13 @@ test('ambiguous or incomplete data never receives an invented price or currency'
 test('import discards visibility and extra fields from untrusted files',()=>{
  const r=normalizeMerchants([{id:'injected',room_id:'other',visible:true,name:'<script>',location:'Дом',items:[{name:'x',price:'1 зм',script:'bad'}]}]);assert.equal(r.merchants[0].visible,undefined);assert.equal(r.merchants[0].room_id,undefined);assert.equal(r.merchants[0].items[0].script,undefined);
 });
+test('price column selection prefers selling prices and exposes base prices for preview',()=>{
+ const r=merchantsFromBlocks([{type:'paragraph',heading:true,text:'Банда'},{type:'table',rows:[['Каталог'],['Наименование','Базовая цена','Цена для незнакомцев','Запас'],['Паёк','5 см','1 зм 5 см','Секрет']]}]);
+ assert.equal(r.merchants[0].items[0].price,'1 зм 5 см');assert.equal(r.merchants[0].priceColumn,1);assert.deepEqual(r.merchants[0].priceOptions[0].prices,['5 см']);assert.equal(normalizeMerchants(r).merchants[0].priceOptions,undefined);
+});
+test('service tables with reference prices and unusual column order are recognized',()=>{
+ const r=merchantsFromBlocks([{type:'paragraph',heading:true,text:'Орвин'},{type:'table',rows:[['Условие','Стоимость (зм)','Услуга'],['секрет','5','Ночлег']]}]);assert.equal(r.merchants[0].items[0].name,'Ночлег');assert.equal(r.merchants[0].items[0].price,'5');
+});
+test('Word paragraphs with explicit merchant name and price list become shop records',()=>{
+ const r=merchantsFromBlocks([{type:'paragraph',text:'Торговец: Нора'},{type:'paragraph',text:'Место: Мастерская'},{type:'paragraph',text:'Зелье — 50 зм'},{type:'paragraph',text:'Мазь: 10 зм'}]);assert.equal(r.merchants[0].items.length,2);assert.equal(r.merchants[0].location,'Мастерская');
+});

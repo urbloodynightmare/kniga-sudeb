@@ -1,7 +1,7 @@
 // Deterministic import: preserve variable prices instead of guessing numbers.
 export const MERCHANT_TEMPLATE={merchants:[{name:'Лиора Фенн',location:'Дом милосердия',items:[{name:'Лечебное зелье',price:'50 зм'},{name:'Перевязка и осмотр',price:'5 см'}]}]};
 const text=(v,max=5000)=>{const s=String(v??'').trim();if(s.length>max)throw Error(`Слишком длинное значение (максимум ${max} символов).`);return s;};
-const field=(o,...keys)=>{for(const k of keys)if(o?.[k]!==undefined)return o[k];return undefined;};
+const field=(o,...keys)=>{for(const k of keys)if(o?.[k]!==undefined)return o[k];if(o&&typeof o==='object'){const key=Object.keys(o).find(k=>keys.includes(k.trim().toLowerCase()));if(key!==undefined)return o[key];}return undefined;};
 export function normalizeMerchants(data){
  const source=Array.isArray(data)?data:field(data,'merchants','traders','торговцы');
  if(!Array.isArray(source)||!source.length)throw Error('Торговцы не найдены. Нужны имя торговца и таблица товаров с ценами.');
@@ -30,10 +30,14 @@ export function csvRows(source,sep=delimiter(source.split(/\r?\n/)[0])){
  }
  if(quoted)throw Error('В таблице не закрыта кавычка.');row.push(cell.trim());if(row.some(Boolean))rows.push(row);return rows;
 }
-const header=v=>String(v).trim().toLowerCase().replace(/ё/g,'е');
-const priceColumn=v=>/^(цена|price|стоимость)(?:\s|$)/.test(header(v));
-const itemColumn=v=>/^(товар|предмет|название|item|goods)/.test(header(v));
+const header=v=>String(v).trim().toLowerCase().replace(/ё/g,'е').replace(/\s+/g,' ');
+const priceColumn=v=>/(?:^|\s)(?:цен[аы]|стоимость|price)(?:\s|[(:/]|$)/.test(header(v));
+const itemColumn=v=>/^(товар|предмет|название|наименование|услуг[аи]|item|goods|service)/.test(header(v));
+// Prefer the actual selling price over a reference/base column; the preview can override it.
+function columns(rows){for(let row=0;row<Math.min(rows.length,10);row++){const h=rows[row],ni=h.findIndex(itemColumn),prices=h.map((v,index)=>({label:v,index})).filter(x=>priceColumn(x.label));if(ni>=0&&prices.length){const selected=prices.find(x=>!/(?:базов|base|reference)/i.test(x.label))||prices[0];return {row,ni,pi:selected.index,prices};}}return null;}
 export function merchantsFromBlocks(blocks){
+ // Word lists with explicit merchant labels are handled just like text lists.
+ const expanded=[];let explicit=false,list=null;for(const b of blocks){if(b.type==='paragraph'){if(/^(имя|торговец|merchant)\s*:/i.test(b.text)){explicit=true;list=null;}else if(b.heading){explicit=false;list=null;}const item=b.text.match(/^\s*[-•*]?\s*(.+?)\s*(?:[—–]|:\s*)\s*(\d[\s\S]*?(?:зм|см|мм|пм|эм|gp|sp|cp|pp|ep)(?=\s|$|[.,;])[\s\S]*)$/i);if(explicit&&item){if(!list){list={type:'table',rows:[['Товар','Цена']]};expanded.push(list);}list.rows.push([item[1],item[2]]);continue;}}else list=null;expanded.push(b);}blocks=expanded;
  const merchants=[];let heading='',pendingName='',pendingPlace='';
  for(const block of blocks){
   if(block.type==='paragraph'){
@@ -43,16 +47,16 @@ export function merchantsFromBlocks(blocks){
    if(block.heading){heading=s;pendingName='';pendingPlace='';}
    continue;
   }
-  const rows=block.rows||[],headers=rows[0]||[],pi=headers.findIndex(priceColumn),ni=headers.findIndex(itemColumn);
-  if(pi<0||ni<0){continue;}
+  const rows=block.rows||[],cols=columns(rows);if(!cols)continue;const {row,pi,ni,prices}=cols;
   const title=heading.replace(/^\d+[.)]\s*/,''),split=title.split(/\s{2,}|\s+[—–|]\s+/);
   let name=pendingName||split.shift()||'',location=pendingPlace||split.join(' — ');
   if(!name)throw Error('Перед таблицей товаров укажите заголовок с именем торговца.');
   const items=[];
-  rows.slice(1).forEach((r,i)=>{if(!r.some(Boolean))return;if(!r[ni]?.trim()||!r[pi]?.trim())throw Error(`«${name}», строка ${i+2}: отсутствует товар или цена.`);items.push({name:r[ni],price:r[pi]});});
-  merchants.push({name,location,items});pendingName='';pendingPlace='';
+  const dataRows=rows.slice(row+1).filter(r=>r.some(Boolean));
+  dataRows.forEach((r,i)=>{if(!r[ni]?.trim()||!r[pi]?.trim())throw Error(`«${name}», строка ${row+i+2}: отсутствует товар или цена.`);items.push({name:r[ni],price:r[pi]});});
+  merchants.push({name,location,items,priceOptions:prices.map(p=>({label:p.label,prices:dataRows.map(r=>r[p.index]||'')})),priceColumn:prices.findIndex(p=>p.index===pi)});pendingName='';pendingPlace='';
  }
- return normalizeMerchants({merchants});
+ const result=normalizeMerchants({merchants});result.merchants.forEach((m,i)=>{if(merchants[i].priceOptions.length>1){m.priceOptions=merchants[i].priceOptions;m.priceColumn=merchants[i].priceColumn;}});return result;
 }
 function parseCsv(source){
  const rows=csvRows(source),h=rows[0]?.map(header)||[],mi=h.findIndex(v=>/^(торговец|merchant|имя)$/.test(v)),li=h.findIndex(v=>/^(место|location|place)$/.test(v)),ni=h.findIndex(itemColumn),pi=h.findIndex(priceColumn);
@@ -78,11 +82,13 @@ export function parseMerchantText(source,filename=''){
  }
  flush();return merchantsFromBlocks(blocks);
 }
-export function docxBlocks(xml,Parser=globalThis.DOMParser){
+export function docxBlocks(xml,Parser=globalThis.DOMParser,stylesXml=''){
  const doc=new Parser().parseFromString(xml,'application/xml');if(doc.getElementsByTagName('parsererror').length)throw Error('Повреждён документ Word.');
  const ns='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
  const visibleText=node=>{let s='';const walk=n=>{if(n.namespaceURI===ns&&n.localName==='del')return;if(n.namespaceURI===ns&&n.localName==='t')s+=n.textContent;else if(n.namespaceURI===ns&&n.localName==='tab')s+='  ';else if(n.namespaceURI===ns&&n.localName==='br')s+='\n';else for(const c of n.childNodes||[])walk(c);};walk(node);return s.trim();};
  const body=doc.getElementsByTagNameNS(ns,'body')[0];if(!body)throw Error('В файле не найден текст Word.');
- const blocks=[];for(const el of body.children){if(el.localName==='p'){const style=el.getElementsByTagNameNS(ns,'pStyle')[0]?.getAttributeNS(ns,'val')||'';blocks.push({type:'paragraph',text:visibleText(el),heading:/heading|заголовок/i.test(style)});}else if(el.localName==='tbl'){const rows=[...el.children].filter(n=>n.localName==='tr').map(r=>[...r.children].filter(n=>n.localName==='tc').map(visibleText));blocks.push({type:'table',rows});}}
+ const styles=new Map();if(stylesXml){const definitions=new Parser().parseFromString(stylesXml,'application/xml');for(const s of definitions.getElementsByTagNameNS(ns,'style'))styles.set(s.getAttributeNS(ns,'styleId'),{name:s.getElementsByTagNameNS(ns,'name')[0]?.getAttributeNS(ns,'val')||'',base:s.getElementsByTagNameNS(ns,'basedOn')[0]?.getAttributeNS(ns,'val'),outline:s.getElementsByTagNameNS(ns,'outlineLvl')[0]?.getAttributeNS(ns,'val')});}
+ function isHeading(id,seen=new Set()){if(!id||seen.has(id))return false;seen.add(id);const s=styles.get(id);if(s?.outline!==undefined)return Number(s.outline)<9;return /heading|заголовок/i.test(s?.name||id)||isHeading(s?.base,seen);}
+ const blocks=[];const read=node=>{for(const el of node.children){if(el.localName==='p'){const style=el.getElementsByTagNameNS(ns,'pStyle')[0]?.getAttributeNS(ns,'val')||'',outline=el.getElementsByTagNameNS(ns,'outlineLvl')[0]?.getAttributeNS(ns,'val');blocks.push({type:'paragraph',text:visibleText(el),heading:outline!==undefined?Number(outline)<9:isHeading(style)});}else if(el.localName==='tbl'){const rows=[...el.children].filter(n=>n.localName==='tr').map(r=>[...r.children].filter(n=>n.localName==='tc').map(visibleText));blocks.push({type:'table',rows});}else if(['sdt','sdtContent','customXml'].includes(el.localName))read(el);}};read(body);
  return blocks;
 }
