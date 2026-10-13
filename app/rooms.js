@@ -63,18 +63,19 @@ export function createRooms({cloud,esc,safeRich,showDialog,toast,personalJournal
   }catch(e){toast(translate(e));}
  }
  async function submit(form){
-  const mode=form.dataset.roomForm,button=form.querySelector('[type="submit"]'),target=roomId;button.disabled=true;form.querySelector('.room-form-error').textContent='';
+  const mode=form.dataset.roomForm,button=form.querySelector('[type="submit"]'),target=roomId,noteContext=editor,accountKey=key();button.disabled=true;form.querySelector('.room-form-error').textContent='';
   try{
    const data=new FormData(form);
    if(mode==='note'){
     saveDraft();const title=data.get('title').trim();if(!title)throw Error('INVALID_NAME');
-    const result=await rpc('save_party_note',{target_room:editor.roomId,note_id:editor.id,note_title:title,note_body:safeRich(form.querySelector('.room-note-editor').innerHTML),expected_revision:editor.revision});
-    localStorage.removeItem(draftKey(editor.draftId));editor=null;document.querySelector('#dialog').close();await refresh();toast('Запись сохранена для партии');return result;
+    const body=safeRich(form.querySelector('.room-note-editor').innerHTML);form.elements.title.disabled=true;form.querySelector('.room-note-editor').contentEditable='false';
+    const result=await rpc('save_party_note',{target_room:noteContext.roomId,note_id:noteContext.id,note_title:title,note_body:body,expected_revision:noteContext.revision});
+    const savedDraftKey=`${accountKey}:draft:${noteContext.roomId}:${noteContext.draftId}`;try{const draft=JSON.parse(localStorage.getItem(savedDraftKey)||'null');if(draft&&draft.body===body&&draft.title.trim()===title)localStorage.removeItem(savedDraftKey);}catch{}if(editor===noteContext){editor=null;document.querySelector('#dialog').close();}await refresh();toast('Запись сохранена для партии');return result;
    }
    if(mode==='create')roomId=await rpc('create_party_room',{room_name:data.get('room_name').trim(),member_name:data.get('member_name').trim()});
    if(mode==='join'){let code=data.get('code').trim();try{code=new URL(code).searchParams.get('party')||code;}catch{}roomId=await rpc('join_party_room',{code,member_name:data.get('member_name').trim()});const url=new URL(location.href);url.searchParams.delete('party');historyReplace(url);}
    localStorage.setItem(key(),roomId);document.querySelector('#dialog').close();await refresh();attach();paint();
-  }catch(e){form.querySelector('.room-form-error').textContent=e.message?.includes('INVALID_NAME')?'Введите название.':translate(e);if(mode==='note'&&e.message?.includes('REVISION_CONFLICT')){
+  }catch(e){if(mode==='note'){form.elements.title.disabled=false;form.querySelector('.room-note-editor').contentEditable='true';}form.querySelector('.room-form-error').textContent=e.message?.includes('INVALID_NAME')?'Введите название.':translate(e);if(mode==='note'&&e.message?.includes('REVISION_CONFLICT')){
     const notice=document.createElement('p');notice.className='hint';notice.textContent='Ваш черновик остаётся здесь. Можно сохранить его отдельной записью, а актуальную версию проверить в дневнике.';form.querySelector('.room-form-error').append(notice);
     if(!form.querySelector('[data-room-action="conflict-copy"]'))form.querySelector('.dialog-actions').insertAdjacentHTML('beforeend',buttonHtmlCopy());
    }else roomId=target;button.disabled=false;}
