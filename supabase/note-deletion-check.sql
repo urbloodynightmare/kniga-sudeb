@@ -1,0 +1,41 @@
+begin;
+create temporary table note_delete_qa(owner_id uuid,player_id uuid,stranger_id uuid,room_id uuid,note_id uuid,code text);
+insert into note_delete_qa(owner_id,player_id,stranger_id) values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid());
+grant all on note_delete_qa to authenticated;
+insert into auth.users(id) select owner_id from note_delete_qa union all select player_id from note_delete_qa union all select stranger_id from note_delete_qa;
+select set_config('request.jwt.claim.sub',owner_id::text,true) from note_delete_qa;
+set local role authenticated;
+do $$ declare r uuid;n jsonb;t record;denied boolean=false;begin
+ r=public.create_party_room('QA note deletion','Master');update note_delete_qa set room_id=r,code=public.list_party_rooms()->0->>'invite_code';
+ n=public.save_party_note(r,null,'QA note','Private test text',0);update note_delete_qa set note_id=(n->>'id')::uuid;
+ select * into t from note_delete_qa;
+ begin perform public.delete_party_note(r,t.note_id,1);exception when others then if sqlerrm='NOTE_NOT_ARCHIVED' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL active note deletion';end if;
+ perform public.archive_party_note(r,t.note_id,1,true);
+ denied=false;begin perform public.delete_party_note(r,t.note_id,1);exception when others then if sqlerrm='REVISION_CONFLICT' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL stale revision deletion';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',stranger_id::text,true) from note_delete_qa;
+set local role authenticated;
+do $$ declare t record;denied boolean=false;begin
+ select * into t from note_delete_qa;
+ begin perform public.delete_party_note(t.room_id,t.note_id,2);exception when others then if sqlerrm='NOT_ALLOWED' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL stranger deletion';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from note_delete_qa;
+set local role authenticated;
+do $$ declare t record;denied boolean=false;begin
+ select * into t from note_delete_qa;perform public.join_party_room(t.code,'Player');
+ begin perform public.delete_party_note(gen_random_uuid(),t.note_id,2);exception when others then if sqlerrm='NOT_ALLOWED' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL wrong room deletion';end if;
+ if not exists(select 1 from public.party_note_history where note_id=t.note_id) then raise exception 'FAIL missing initial history';end if;
+ perform public.delete_party_note(t.room_id,t.note_id,2);
+ if exists(select 1 from public.party_notes where id=t.note_id) or exists(select 1 from public.party_note_history where note_id=t.note_id) then raise exception 'FAIL note/history retained';end if;
+ denied=false;begin perform public.archive_party_note(t.room_id,t.note_id,2,false);exception when others then if sqlerrm='REVISION_CONFLICT' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL restored permanently deleted note';end if;
+end $$;
+reset role;
+rollback;
+select 'PASS: active note protected, stale revision protected, membership checked, note and history removed, restoration blocked; test data rolled back' as result;
