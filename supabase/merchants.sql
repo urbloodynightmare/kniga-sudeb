@@ -21,7 +21,7 @@ create or replace function public.validate_party_merchant(data jsonb)
 returns jsonb language plpgsql immutable set search_path='' as $$
 declare item jsonb; goods jsonb='[]'::jsonb; shop_name text=trim(data->>'name'); place text=trim(coalesce(data->>'location',''));
 begin
- if jsonb_typeof(data) is distinct from 'object' or shop_name is null or length(shop_name) not between 1 and 150 or length(place)>300 
+ if jsonb_typeof(data) is distinct from 'object' or shop_name is null or length(shop_name) not between 1 and 150 or length(place)>300
  or jsonb_typeof(data->'items') is distinct from 'array' then raise exception 'INVALID_MERCHANT'; end if;
  if jsonb_array_length(data->'items') not between 1 and 500 or octet_length(data::text)>1000000 then raise exception 'INVALID_MERCHANT'; end if;
  for item in select value from jsonb_array_elements(data->'items') loop
