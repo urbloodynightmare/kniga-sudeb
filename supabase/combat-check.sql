@@ -1,0 +1,51 @@
+begin;
+create temporary table combat_qa(master uuid,player uuid,stranger uuid,room uuid,code text);
+insert into combat_qa(master,player,stranger) values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid());
+grant all on combat_qa to authenticated;
+insert into auth.users(id) select master from combat_qa union all select player from combat_qa union all select stranger from combat_qa;
+select set_config('request.jwt.claim.sub',master::text,true) from combat_qa;
+set local role authenticated;
+do $$ declare r uuid;begin
+ r=public.create_party_room('QA combat','QA master');update combat_qa set room=r,code=public.list_party_rooms()->0->>'invite_code';
+ perform public.import_party_monsters(r,'[{"name":"SECRET MONSTER","hpMax":20,"raw":"SECRET ABILITY"}]');
+ perform public.save_party_combat(r,'{"name":"Battle","active":true,"round":1,"currentId":"one","combatants":[{"id":"one","name":"Goblin","initiative":15,"hp":7,"hpMax":20,"raw":"SECRET ABILITY","ac":18,"abilities":{"dex":18}},{"id":"two","name":"Hero","initiative":12,"hp":10}]}',0);
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player::text,true) from combat_qa;
+set local role authenticated;
+do $$ declare t record;view jsonb;denied boolean=false;begin
+ select * into t from combat_qa;perform public.join_party_room(t.code,'Player');view=public.party_combat_view(t.room);
+ if view::text like '%SECRET%' or view->'scene'->'combatants'->0 ? 'hp' or view->'scene'->'combatants'->0 ? 'ac' or view->'scene'->'combatants'->0 ? 'abilities' then raise exception 'FAIL private data leak';end if;
+ if jsonb_array_length(view->'scene'->'combatants')<>2 or view->'scene'->>'currentId'<>'one' then raise exception 'FAIL public order';end if;
+ if exists(select 1 from public.party_monsters) or exists(select 1 from public.party_combat) then raise exception 'FAIL direct private access';end if;
+ if not exists(select 1 from public.party_combat_updates where room_id=t.room) then raise exception 'FAIL realtime signal';end if;
+ begin perform public.save_party_combat(t.room,'{"combatants":[]}',1);exception when others then if sqlerrm='MASTER_REQUIRED' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL player write';end if;
+ denied=false;begin perform public.import_party_monsters(t.room,'[{"name":"Bad"}]');exception when others then if sqlerrm='MASTER_REQUIRED' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL player import';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',stranger::text,true) from combat_qa;
+set local role authenticated;
+do $$ declare denied boolean=false;begin
+ begin perform public.party_combat_view((select room from combat_qa));exception when others then if sqlerrm='NOT_ALLOWED' then denied=true;else raise;end if;end;
+ if not denied or exists(select 1 from public.party_combat_updates) then raise exception 'FAIL outsider';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',master::text,true) from combat_qa;
+set local role authenticated;
+do $$ declare t record;view jsonb;denied boolean=false;begin
+ select * into t from combat_qa;view=public.party_combat_view(t.room);
+ if view::text not like '%SECRET ABILITY%' then raise exception 'FAIL master stats';end if;
+ perform public.import_party_monsters(t.room,'[{"name":"SECRET MONSTER","hpMax":99}]');
+ perform public.update_party_monster(t.room,(select id from public.party_monsters limit 1),'{"name":"RENAMED MONSTER","hpMax":77}');
+ if (select count(*) from public.party_monsters)<>1 then raise exception 'FAIL pool deduplication';end if;
+ if public.party_combat_view(t.room)->'scene'->'combatants'->0->>'hpMax'<>'20' then raise exception 'FAIL template altered actor';end if;
+ begin perform public.save_party_combat(t.room,'{"combatants":[]}',0);exception when others then if sqlerrm='REVISION_CONFLICT' then denied=true;else raise;end if;end;
+ if not denied then raise exception 'FAIL conflict';end if;
+ perform public.change_party_master(t.room,t.player);
+ if exists(select 1 from public.party_monsters) or public.party_combat_view(t.room)::text like '%SECRET ABILITY%' then raise exception 'FAIL former master';end if;
+end $$;
+reset role;
+rollback;
+select 'PASS: master-only catalogue and stats, public turn order, no HP or abilities in player API, outsider isolation, revision conflict, separate actor copies and master transfer' as result;
