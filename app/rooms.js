@@ -1,13 +1,13 @@
-import {masterSummaryHtml} from './master-summary.js?v=20261013-04';
+import {masterSummaryHtml} from './master-summary.js?v=20261013-05';
 // Shared room state is separate from private player books and their save queue.
 export function createRooms({cloud,esc,safeRich,showDialog,toast,personalJournal,personalCharacters=()=>[],syncPersonal=async()=>{}}){
  let rooms=[],roomId='',members=[],notes=[],sheets=[],archives=[],error='',loading=false,channel=null,timer=null,userId=null,refreshing=false,refreshAgain=false,editor=null;
- const collapsed=new Set(),roomTones=new Map();
+ const collapsed=new Set(),roomTones=new Map(),listeners=new Set();
  const room=()=>rooms.find(r=>r.id===roomId),key=()=>`book-of-fates-room:${cloud.user?.id||'local'}`;
  const draftKey=(id='new',targetRoom=roomId)=>`${key()}:draft:${targetRoom}:${id}`;
  const rpc=async(name,args={})=>{const result=await cloud.client.rpc(name,args);if(result.error)throw result.error;return result.data;};
  const translate=e=>e.message?.includes('CHARACTER_NOT_OWNED')?'Выберите своего персонажа или оставьте комнату без героя.':e.message?.includes('PERSONAL_SYNC_REQUIRED')?'Сначала дождитесь сохранения героя в аккаунте и повторите выбор.':e.message?.includes('REVISION_CONFLICT')?'Запись уже изменил другой участник. Ваш текст сохранён в черновике.':e.message?.includes('INVITE_NOT_FOUND')?'Приглашение не найдено или уже заменено.':e.message?.includes('MASTER_REQUIRED')?'Просмотр карточек доступен только текущему мастеру.':e.message?.includes('OWNER_CANNOT_LEAVE')?'Создатель комнаты не может выйти из неё.':e.message?.includes('TRANSFER_MASTER_FIRST')?'Сначала передайте роль мастера другому участнику.':e.message?.includes('NOT_ALLOWED')?'Нет доступа к этой комнате.':e.message?.includes('PGRST202')||e.code==='42P01'?'Комнаты пока не подключены к базе. Требуется выполнить миграцию rooms.sql.':'Не удалось связаться с комнатой. Попробуйте ещё раз; черновики сохранены на устройстве.';
- function paint(){const root=document.querySelector('#party-room-root');if(root)root.innerHTML=view();const copies=document.querySelector('#room-diary-copies');if(copies)copies.innerHTML=archiveView();const personal=document.querySelector('.personal-journal'),importButton=personal?.querySelector('[data-room-action="note-import"]');if(personal&&!importButton&&room())personal.insertAdjacentHTML('beforeend',button('Перенести в общий дневник','note-import'));if(!room())importButton?.remove();}
+ function paint(){const root=document.querySelector('#party-room-root');if(root)root.innerHTML=view();const copies=document.querySelector('#room-diary-copies');if(copies)copies.innerHTML=archiveView();const personal=document.querySelector('.personal-journal'),importButton=personal?.querySelector('[data-room-action="note-import"]');if(personal&&!importButton&&room())personal.insertAdjacentHTML('beforeend',button('Перенести в общий дневник','note-import'));if(!room())importButton?.remove();for(const listener of listeners)listener();}
  function stop(){if(channel)cloud.client?.removeChannel(channel);channel=null;clearInterval(timer);timer=null;}
  function attach(){stop();if(!roomId)return;const selectedRoom=roomId;channel=cloud.client.channel(`party:${selectedRoom}`).on('postgres_changes',{event:'*',schema:'public',table:'party_notes',filter:`room_id=eq.${selectedRoom}`},()=>refresh()).on('postgres_changes',{event:'*',schema:'public',table:'party_members',filter:`room_id=eq.${selectedRoom}`},()=>refresh()).subscribe();timer=setInterval(()=>{if(document.visibilityState==='visible')refresh();},12000);}
  async function refresh(){
@@ -102,5 +102,5 @@ export function createRooms({cloud,esc,safeRich,showDialog,toast,personalJournal
  document.addEventListener('submit',e=>{if(e.target.dataset.roomForm){e.preventDefault();submit(e.target);}});
  document.addEventListener('toggle',e=>{const el=e.target,id=el.dataset?.roomFold;if(!id||!el.isConnected)return;el.open?collapsed.delete(id):collapsed.add(id);try{localStorage.setItem(key()+':collapsed',JSON.stringify([...collapsed]));}catch{}},true);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&userId)refresh();});
- return {start,view,archiveView,hasRoom:()=>!!room(),refresh,join:()=>roomDialog('join')};
+ return {start,view,archiveView,hasRoom:()=>!!room(),refresh,join:()=>roomDialog('join'),context:()=>({room:room(),rooms}),subscribe:fn=>{listeners.add(fn);return()=>listeners.delete(fn);},selectRoom:id=>rooms.some(r=>r.id===id)?action({dataset:{roomAction:'switch',id}}):Promise.resolve()};
 }
