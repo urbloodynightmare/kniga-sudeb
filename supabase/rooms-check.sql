@@ -1,4 +1,4 @@
--- Run AFTER rooms.sql, or concatenate inside its transaction before COMMIT.
+-- Run AFTER rooms.sql and master-summary.sql, or inside a migration transaction.
 -- Creates disposable users/rooms inside a transaction and rolls them back.
 begin;
 create temporary table room_test_context(owner_id uuid,player_id uuid,stranger_id uuid,room_id uuid,note_id uuid,code text);
@@ -47,7 +47,7 @@ do $$ declare t record; denied boolean:=false; saved jsonb; begin
  denied:=false;
  begin perform public.change_party_master(t.room_id,t.player_id);exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
  if not denied then raise exception 'FAIL self promote'; end if;
- perform public.save_player_book('{"characters":[{"id":"qa","name":"QA hero"}],"journal":"PRIVATE"}'::jsonb,0);
+ perform public.save_player_book('{"characters":[{"id":"qa","name":"QA hero","notes":"PRIVATE SHEET"}],"journal":"PRIVATE","masterSummaries":[{"id":"qa","name":"QA hero","hp":10,"notes":"PRIVATE SUMMARY","abilities":[{"key":"str","score":10,"notes":"PRIVATE ABILITY"}]}]}'::jsonb,0);
 end $$;
 reset role;
 select set_config('request.jwt.claim.sub',owner_id::text,true) from room_test_context;
@@ -57,6 +57,7 @@ do $$ declare t record; books jsonb; denied boolean:=false; begin
  books:=public.party_character_sheets(t.room_id);
  if jsonb_array_length(books)<>2 then raise exception 'FAIL master read'; end if;
  if books::text like '%PRIVATE%' then raise exception 'FAIL private journal leak'; end if;
+ if (select (b->'characters'->0->>'hp')::int from jsonb_array_elements(books) b where b->>'user_id'=t.player_id::text) is distinct from 10 then raise exception 'FAIL summary health'; end if;
  if exists(select 1 from public.player_books where user_id=t.player_id) then raise exception 'FAIL private book RLS'; end if;
  perform public.change_party_master(t.room_id,t.player_id);
  if public.list_party_rooms()->0->>'master_id'<>t.player_id::text then raise exception 'FAIL transfer'; end if;
