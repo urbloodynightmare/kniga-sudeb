@@ -1,5 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Literata:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
-:root{--bg:#f6f3e9;--surface:#fbf9f2;--subtle:#eeefe4;--accent:#8b7546;--button-bg:#244832;--button-fg:#f8f3df;--sidebar-bg:#163322;--sidebar-ink:#e7ead5;--sidebar-active:#284831;--magic-bg:#f1ecd9;--magic-line:#a98e53;--container-bg:#e4ece6;--container-inner:#f0f4ef;--container-line:#718c7b;--equipped-bg:#e4eccc;--equipped-line:#829463;--artifact-bg:#ece7ef;--artifact-line:#9886a4;--danger:#a04b3c;font-family:'Golos Text',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;--ink:#213a35;--green:#244b40;--gold:#bb955d;--paper:#fffefa;--line:#e5e3da;--muted:#82867c;--serif:'Literata',Georgia,serif}
+:root{--bg:#f1f2f5;--surface:#fafbfd;--subtle:#e6eaf1;--accent:#556783;--button-bg:#384f79;--button-fg:#f7f9fe;--sidebar-bg:#222e46;--sidebar-ink:#e8edf7;--sidebar-active:#344462;--magic-bg:#eeeaf6;--magic-line:#9387b0;--container-bg:#e7edf5;--container-inner:#f3f6fa;--container-line:#889bb4;--equipped-bg:#e2eaf7;--equipped-line:#7088b0;--artifact-bg:#eee7f2;--artifact-line:#9b80b0;--danger:#a54843;font-family:'Golos Text',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;--ink:#29354a;--green:var(--ink);--gold:var(--accent);--paper:var(--surface);--line:#c7cfdd;--muted:#586276;--serif:'Literata',Georgia,serif}
 *{box-sizing:border-box}
 body{margin:0}
 button{font:inherit}
@@ -101,7 +101,7 @@ main{max-width:1480px;margin:auto;padding:35px 42px 60px}
 .hero .primary{background:var(--button-bg);color:var(--button-fg);border-color:var(--line);font-size:11px}
 .hero .primary:hover{background:var(--button-bg)}
 .hero-art{width:310px;height:290px;position:relative;flex-shrink:0;display:flex;align-items:center;justify-content:center;margin:-25px -12px -25px 20px}
-.hero-art svg{width:245px;filter:drop-shadow(0 12px 25px #071e18)}
+.hero-art svg{width:245px;filter:drop-shadow(0 12px 25px #101726)}
 .orbit{position:absolute;border:1px solid var(--line);border-radius:50%;width:260px;height:260px}
 .o2{width:300px;height:300px;border-style:dashed;border-color:var(--line);transform:rotate(25deg)}
 .star{position:absolute;color:var(--ink);font:30px Georgia}
@@ -339,7 +339,7 @@ select{border:1px solid var(--line);border-radius:5px;background:var(--surface);
 textarea{border:1px solid var(--line);border-radius:5px;background:var(--surface);padding:11px 12px;color:var(--ink);width:100%;margin-top:6px;min-width:0;font-size:12px}
 input::placeholder{color:var(--ink)}
 textarea::placeholder{color:var(--ink)}
-input[type=checkbox]{accent-color:#547542;width:15px;height:15px;margin:0}
+input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;margin:0}
 textarea{resize:vertical;min-height:120px;line-height:1.8}
 select{padding-right:22px}
 .check-label{display:flex;align-items:center;gap:8px;font-size:11px}
@@ -1529,10 +1529,10 @@ dialog .ability-summary span{font-size:11px;line-height:1.55}
 @media(max-width:650px){.master-hp b{font-size:17px;letter-spacing:-.4px}
 }
 /* Each room keeps its own identity and independent collapsed panels. */
-.room-tone-0{--room-accent:#426951;--room-tint:#edf3e9}
-.room-tone-1{--room-accent:#5f5891;--room-tint:#efedf8}
-.room-tone-2{--room-accent:#9b6539;--room-tint:#f8eee3}
-.room-tone-3{--room-accent:#367a86;--room-tint:#e8f3f5}
+.room-tone-0{--room-accent:#4d6b96;--room-tint:#eaf0fa}
+.room-tone-1{--room-accent:#74608f;--room-tint:#f0ecf6}
+.room-tone-2{--room-accent:#526e96;--room-tint:#e8eff9}
+.room-tone-3{--room-accent:#7a6498;--room-tint:#eeebf6}
 .room-tabs{display:flex;gap:10px;overflow-x:auto;padding:4px 0 15px;margin:0 0 8px}
 .room-tab{display:flex;align-items:center;gap:10px;min-width:220px;max-width:340px;padding:13px 14px;border:1px solid var(--line);border-top:4px solid var(--room-accent);border-radius:8px;background:var(--surface);text-align:left;flex-shrink:0}
 .room-tab.active{border-color:var(--room-accent);background:var(--room-tint);box-shadow:0 0 0 2px var(--room-tint)}
