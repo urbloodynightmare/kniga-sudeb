@@ -12,9 +12,10 @@ select set_config('request.jwt.claim.sub',player_id::text,true) from access_qa;
 set local role authenticated;
 do $$ declare t record;all_summaries jsonb;denied boolean:=false;begin
  select * into t from access_qa;perform public.join_party_room(t.invite,'Player');
- perform public.save_player_book('{"characters":[{"id":"unselected","name":"SECRET UNSELECTED","notes":"HIDDEN_ONE"},{"id":"selected","name":"Shared hero","notes":"PRIVATE CHARACTER NOTES"}],"journal":"PRIVATE BOOK JOURNAL","masterSummaries":[{"id":"selected","name":"Shared hero","hp":10,"notes":"LEAK","abilities":[{"key":"dex","score":14,"privateNote":"LEAK"}]}]}'::jsonb,0);
+ perform public.save_player_book('{"characters":[{"id":"unselected","name":"SECRET UNSELECTED","notes":"HIDDEN_ONE"},{"id":"selected","name":"Shared hero","notes":"PRIVATE CHARACTER NOTES"}],"journal":"PRIVATE BOOK JOURNAL","masterSummaries":[{"id":"selected","name":"Shared hero","hp":10,"passiveInsight":17,"maneuverDC":15,"maneuverAbility":"Ловкость","notes":"LEAK","abilities":[{"key":"dex","score":14,"privateNote":"LEAK"}]}]}'::jsonb,0);
  perform public.set_party_character(t.room_id,'selected');all_summaries:=public.party_character_sheets(t.room_id);
  if all_summaries::text not like '%Shared hero%' or all_summaries::text like '%PRIVATE%' or all_summaries::text like '%LEAK%' or all_summaries::text like '%SECRET%' then raise exception 'FAIL summary allowlist';end if;
+ if jsonb_path_query_first(all_summaries,'$[*].characters[*] ? (@.id == "selected")')->>'passiveInsight'<>'17' or jsonb_path_query_first(all_summaries,'$[*].characters[*] ? (@.id == "selected")')->>'maneuverDC'<>'15' then raise exception 'FAIL public character metrics';end if;
  begin perform public.party_character_sheet(t.room_id,t.player_id);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;
  if not denied then raise exception 'FAIL player full sheet access';end if;
 end $$;

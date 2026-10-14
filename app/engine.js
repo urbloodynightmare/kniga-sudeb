@@ -55,7 +55,7 @@ export function normalizeDataset(raw){
   return d;
 }
 export function createCharacter(template={}) {
-  return {id:crypto.randomUUID(),name:'Новый герой',level:1,classId:'warlock',raceId:'human',subraceId:'',subclassId:'',backgroundId:'',stats:{str:8,dex:14,con:13,int:10,wis:12,cha:15},choices:{},manualFeatures:[],spells:[],inventory:[],itemOverrides:{},spent:{},customLanguages:[],damage:0,tempHp:0,goldDelta:0,notes:'',appearance:'',backstory:'',allies:'',personality:'',ideals:'',bonds:'',flaws:'',goals:'',avatar:'',armor:'none',shield:false,mageArmor:false,acBonus:0,hpBonus:0,inspiration:false,conditions:[],draft:true,...template};
+  return {id:crypto.randomUUID(),name:'Новый герой',level:1,classId:'warlock',raceId:'human',subraceId:'',subclassId:'',backgroundId:'',stats:{str:8,dex:14,con:13,int:10,wis:12,cha:15},choices:{},manualFeatures:[],spells:[],inventory:[],itemOverrides:{},spent:{},customLanguages:[],damage:0,tempHp:0,goldDelta:0,notes:'',appearance:'',backstory:'',allies:'',personality:'',ideals:'',bonds:'',flaws:'',goals:'',avatar:'',armor:'none',shield:false,mageArmor:false,acBonus:0,hpBonus:0,maneuverAbility:'',maneuverDCBonus:0,inspiration:false,conditions:[],draft:true,...template};
 }
 export function partyTemplates(){return [
   createCharacter({name:'Авантюрин',level:4,classId:'warlock',raceId:'human',subclassId:'aha-patron',backgroundId:'professional-gambler',notes:'Покровитель — Аха. Магические фишки, карты и удача.\n\nЭто заготовка: внесите характеристики и выборы со своего листа.'}),
@@ -178,6 +178,9 @@ export function derive(c,d,validationPass=0){
   s.ac=(armor[s.equippedArmorType]??unarmored)+(bonuses.ac||0)+s.itemBonuses.ac;
   s.skillBonuses=Object.fromEntries(Object.entries(SKILLS).map(([k,[,stat]])=>[k,s.mods[stat]+(s.skills.has(k)?prof:0)+(s.expertise.has(k)&&s.skills.has(k)?prof:0)+(bonuses['skill.'+k]||0)]));
   s.passive=10+s.skillBonuses.perception;
+  s.passiveInsight=10+s.skillBonuses.insight+(['all','skills','ability:wis','skill:insight'].some(k=>s.advantageChecks.has(k))?5:0);
+  s.maneuverAbility=c.maneuverAbility==='auto'?(s.mods.str>=s.mods.dex?'str':'dex'):Object.hasOwn(STATS,c.maneuverAbility)?c.maneuverAbility:null;
+  s.maneuverDC=s.maneuverAbility?8+prof+s.mods[s.maneuverAbility]+clamp(Number(c.maneuverDCBonus)||0,-20,20):null;
   s.saveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.mods[k]+(s.saves.has(k)?prof:0)]));
   s.spellSaveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.saveBonuses[k]+s.itemBonuses.spellSave]));
   s.gold+=Number(c.goldDelta)||0;
@@ -239,7 +242,8 @@ export function validateSave(data,d){
     for(const k of Object.keys(STATS))if(!Number.isInteger(raw.stats?.[k])||raw.stats[k]<1||raw.stats[k]>30)throw Error('Некорректные характеристики');
     const c=createCharacter(raw);c.id=crypto.randomUUID();
     for(const key of ['manualFeatures','spells','inventory','conditions'])if(!Array.isArray(c[key])||c[key].length>1000)throw Error('Некорректный список '+key);
-    for(const key of ['damage','tempHp','goldDelta','acBonus','hpBonus'])if(!Number.isFinite(c[key]))throw Error('Некорректное число '+key);
+    if(!['','auto',...Object.keys(STATS)].includes(c.maneuverAbility))throw Error('Некорректная характеристика манёвров');
+    for(const key of ['damage','tempHp','goldDelta','acBonus','hpBonus','maneuverDCBonus'])if(!Number.isFinite(c[key]))throw Error('Некорректное число '+key);
     for(const entry of [...c.manualFeatures,...c.spells,...c.inventory])if(!entry||typeof entry!=='object'||typeof entry.id!=='string')throw Error('Некорректная запись в листе');
     for(const key of ['choices','spent','itemOverrides'])if(!c[key]||typeof c[key]!=='object'||Array.isArray(c[key]))throw Error('Некорректное поле '+key);
     c.avatar=typeof c.avatar==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(c.avatar)?c.avatar:'';

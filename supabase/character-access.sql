@@ -7,7 +7,7 @@ begin
  return (select coalesce(jsonb_agg(jsonb_build_object('user_id',m.user_id,'display_name',m.display_name,
  'selected_character_id',m.character_id,'characters',coalesce((select jsonb_agg(jsonb_build_object(
   'id',c->'id','name',c->'name','level',c->'level','className',c->'className','subclassName',c->'subclassName',
-  'hp',c->'hp','hpMax',c->'hpMax','tempHp',c->'tempHp','ac',c->'ac','initiative',c->'initiative','prof',c->'prof','speed',c->'speed','passive',c->'passive',
+  'hp',c->'hp','hpMax',c->'hpMax','tempHp',c->'tempHp','ac',c->'ac','initiative',c->'initiative','prof',c->'prof','speed',c->'speed','passive',c->'passive','passiveInsight',c->'passiveInsight','maneuverDC',c->'maneuverDC','maneuverAbility',c->'maneuverAbility',
   'spellDC',c->'spellDC','spellAttack',c->'spellAttack','castingAbility',c->'castingAbility','updatedAt',c->'updatedAt','conditions',c->'conditions',
   'skills',(select coalesce(jsonb_agg(jsonb_build_object('key',a->'key','label',a->'label','ability',a->'ability','bonus',a->'bonus','proficient',a->'proficient','expertise',a->'expertise')),'[]'::jsonb)
     from jsonb_array_elements(case when jsonb_typeof(c->'skills')='array' then c->'skills' else '[]'::jsonb end) a),
