@@ -1,0 +1,41 @@
+-- Disposable integration fixtures, rolled back at the end.
+begin;
+create temporary table loot_qa(master_id uuid,player_id uuid,stranger_id uuid,room_a uuid,room_b uuid,invite text);
+insert into loot_qa(master_id,player_id,stranger_id) values(gen_random_uuid(),gen_random_uuid(),gen_random_uuid());
+grant all on loot_qa to authenticated;
+insert into auth.users(id) select master_id from loot_qa union all select player_id from loot_qa union all select stranger_id from loot_qa;
+select set_config('request.jwt.claim.sub',master_id::text,true) from loot_qa;
+set local role authenticated;
+do $$ declare rid uuid;t record;n bigint;denied boolean=false;begin
+ rid:=public.create_party_room('Loot A','Master');update loot_qa set room_a=rid,invite=public.list_party_rooms()->0->>'invite_code';
+ rid:=public.create_party_room('Loot B','Master');update loot_qa set room_b=rid;select * into t from loot_qa;
+ n:=public.save_party_loot_item(t.room_a,1,'{"name":"PRIVATE LOOT","price":"15 зм","description":"PRIVATE EFFECT"}',0);if n<>1 then raise exception 'FAIL first save';end if;
+ if exists(select 1 from public.party_loot_overrides where room_id=t.room_b) then raise exception 'FAIL room isolation';end if;
+ begin perform public.save_party_loot_item(t.room_a,1,'{"name":"Stale","price":"1 зм","description":""}',0);exception when others then if sqlerrm='REVISION_CONFLICT' then denied:=true;else raise;end if;end;if not denied then raise exception 'FAIL stale creation';end if;
+ n:=public.save_party_loot_item(t.room_a,1,'{"name":"PRIVATE LOOT","price":"25 зм","description":"PRIVATE EFFECT"}',1);if n<>2 then raise exception 'FAIL update revision';end if;
+ denied=false;begin perform public.save_party_loot_item(t.room_a,1,'{"name":"Stale edit","price":"1 зм","description":""}',1);exception when others then if sqlerrm='REVISION_CONFLICT' then denied:=true;else raise;end if;end;if not denied then raise exception 'FAIL stale edit';end if;
+ denied=false;begin perform public.save_party_loot_item(t.room_a,101,'{"name":"Bad","price":"1 зм","description":""}',0);exception when others then if sqlerrm='INVALID_LOOT' then denied:=true;else raise;end if;end;if not denied then raise exception 'FAIL number validation';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from loot_qa;
+set local role authenticated;
+do $$ declare t record;denied boolean=false;begin
+ select * into t from loot_qa;perform public.join_party_room(t.invite,'Player');
+ if exists(select 1 from public.party_loot_overrides) then raise exception 'FAIL player read';end if;
+ begin perform public.save_party_loot_item(t.room_a,2,'{"name":"Bad","price":"1 зм","description":""}',0);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;if not denied then raise exception 'FAIL player write';end if;
+end $$;
+reset role;
+select set_config('request.jwt.claim.sub',stranger_id::text,true) from loot_qa;
+set local role authenticated;
+do $$ begin if exists(select 1 from public.party_loot_overrides) then raise exception 'FAIL outsider read';end if;end $$;
+reset role;
+select set_config('request.jwt.claim.sub',master_id::text,true) from loot_qa;
+set local role authenticated;
+do $$ declare t record;begin select * into t from loot_qa;perform public.change_party_master(t.room_a,t.player_id);if exists(select 1 from public.party_loot_overrides where room_id=t.room_a) then raise exception 'FAIL former master read';end if;end $$;
+reset role;
+select set_config('request.jwt.claim.sub',player_id::text,true) from loot_qa;
+set local role authenticated;
+do $$ declare t record;begin select * into t from loot_qa;if not exists(select 1 from public.party_loot_overrides where room_id=t.room_a and price='25 зм') then raise exception 'FAIL transferred master read';end if;end $$;
+reset role;
+rollback;
+select 'PASS: private room loot, master-only reads/writes, revision conflicts, validation, room isolation, role transfer' as result;
