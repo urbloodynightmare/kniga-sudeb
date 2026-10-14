@@ -1,4 +1,4 @@
-import {DEFAULT_LOOT} from './loot-data.js?v=20261014-21';
+import {DEFAULT_LOOT} from './loot-data.js?v=20261014-22';
 export function validateLootItem(item){
  const number=Number(item.number),name=String(item.name??'').trim(),price=String(item.price??'').trim(),description=String(item.description??'').trim();
  if(!Number.isInteger(number)||number<1||number>100)throw Error('Номер находки должен быть от 1 до 100.');
