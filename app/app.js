@@ -1,11 +1,12 @@
-import {initTheme,setTheme} from './theme.js?v=20261014-12';
-import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20261014-12';
-import {spellNames} from './spell-names.js?v=20261014-12';
-import {cloud} from './cloud.js?v=20261014-12';
-import {createRooms} from './rooms.js?v=20261014-12';
-import {masterSummary} from './master-summary.js?v=20261014-12';
-import {createCombat} from './combat.js?v=20261014-12';
-import {createMerchants} from './merchants.js?v=20261014-12';
+import {createCharacterReader} from './character-reader.js?v=20261014-13';
+import {initTheme,setTheme} from './theme.js?v=20261014-13';
+import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,featReason,validateSave,sources} from './engine.js?v=20261014-13';
+import {spellNames} from './spell-names.js?v=20261014-13';
+import {cloud} from './cloud.js?v=20261014-13';
+import {createRooms} from './rooms.js?v=20261014-13';
+import {masterSummary} from './master-summary.js?v=20261014-13';
+import {createCombat} from './combat.js?v=20261014-13';
+import {createMerchants} from './merchants.js?v=20261014-13';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function safeRich(value){const source=String(value??''),hasMarkup=/<\/?(?:b|strong|i|em|u|s|strike|ul|ol|li|p|div|br|h3|blockquote)\b/i.test(source),template=document.createElement('template');template.innerHTML=hasMarkup?source:esc(source).replace(/\n/g,'<br>');const allowed=new Set(['B','STRONG','I','EM','U','S','STRIKE','UL','OL','LI','P','DIV','BR','H3','BLOCKQUOTE']);for(const node of [...template.content.querySelectorAll('*')]){if(!allowed.has(node.tagName))node.replaceWith(...node.childNodes);else for(const attr of [...node.attributes])node.removeAttribute(attr.name);}return template.innerHTML;}
 const ICONS={combat:'⚔',merchants:'⚖',party:'◈',sheet:'▤',growth:'✧',spells:'✦',inventory:'◇',story:'♧',notes:'☷',library:'⌕',rules:'⊙'};
@@ -54,9 +55,27 @@ function spellRestriction(p,c,s){const limits=spellLimits(c,s);if(!p.classes.inc
 const current=()=>state.characters.find(c=>c.id===selected);
 const opt=(value,label,selectedValue,extra='')=>`<option value="${esc(value)}" ${String(value)===String(selectedValue)?'selected':''} ${extra}>${esc(label)}</option>`;
 const btn=(label,action,cls='',extra='')=>`<button class="button ${cls}" data-action="${action}" ${extra}>${label}</button>`;
-const partyRooms=createRooms({cloud,esc,safeRich,showDialog,toast,personalJournal:()=>state.journal||'',personalCharacters:()=>state.characters||[],syncPersonal:async()=>{if(!save())throw Error('PERSONAL_SYNC_REQUIRED');await cloud.flush();if(cloud.queue?.pending)throw Error('PERSONAL_SYNC_REQUIRED');}});
+const characterReader=createCharacterReader({esc,showDialog});
+const partyRooms=createRooms({openCharacter:openRoomCharacter,closeCharacter:()=>characterReader.close(),cloud,esc,safeRich,showDialog,toast,personalJournal:()=>state.journal||'',personalCharacters:()=>state.characters||[],syncPersonal:async()=>{if(!save())throw Error('PERSONAL_SYNC_REQUIRED');await cloud.flush();if(cloud.queue?.pending)throw Error('PERSONAL_SYNC_REQUIRED');}});
 const partyMerchants=createMerchants({cloud,rooms:partyRooms,esc,showDialog,toast});
 const partyCombat=createCombat({cloud,rooms:partyRooms,esc,showDialog,toast});
+function openRoomCharacter(payload){
+ const previous=dataset,previousFilter=filter,previousSpellFilter=spellFilter,folds=[...collapsedContainers];
+ try{
+  if(payload.dataset)dataset=normalizeDataset(payload.dataset);
+  const c=validateSave({format:'book-of-fates',version:1,characters:[payload.character]},dataset)[0],s=derive(c,dataset);
+  filter='';spellFilter='all';collapsedContainers.clear();
+  const spellDescriptions=Object.fromEntries([...new Set([...c.spells.map(p=>p.id),...s.fixedSpells.map(p=>p.slug)])].map(id=>{const p=c.spells.find(p=>p.id===id&&p.custom)||spellOf(id),text=p.descriptionRu||p.description||'Описание отсутствует.';return [id,abilitySummary(text)+`<p class="ability-text">${formatAbilityText(text)}</p>`];}));
+  characterReader.open({name:c.name,portrait:avatar(c,true),spellDescriptions,identity:`${nameOf('classes',c.classId)} · ${c.level} ур. · ${nameOf('subclasses',c.subclassId)}`,sections:[
+   {id:'sheet',label:'Лист',html:sheetView(c,s)},
+   {id:'spells',label:'Заклинания',html:spellsView(c,s)},
+   {id:'inventory',label:'Снаряжение',html:inventoryView(c,s)},
+   {id:'growth',label:'Развитие',html:growthView(c,s)},
+   {id:'story',label:'История',html:storyView(c)},
+   {id:'notes',label:'Заметки',html:notesView(c)}
+  ]});
+ }finally{dataset=previous;filter=previousFilter;spellFilter=previousSpellFilter;collapsedContainers.clear();for(const id of folds)collapsedContainers.add(id);}
+}
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('visible'),4000);}
 function pendingStorageKey(){return storageKey()+':pending';}
 function save(){try{if(dataset&&state?.characters)state.masterSummaries=state.characters.map(c=>masterSummary(c,dataset));localStorage.setItem(storageKey(),JSON.stringify(state));if(cloud.user&&!loadingAccount){localStorage.setItem(pendingStorageKey(),'1');cloud.enqueue(state);}$('#save-status')?.classList.remove('failed');return true;}catch{$('#save-status')?.classList.add('failed');toast('Не удалось сохранить в браузере. Скачайте резервную копию.');return false;}}
@@ -131,7 +150,7 @@ function notesView(c){return `<div class="section-heading"><div><div class="eyeb
 function journalView(){return `<div class="section-heading"><div><div class="eyebrow muted">ХРОНИКИ ПРИКЛЮЧЕНИЙ</div><h1>Заметки партии</h1><p class="hint">Комнаты объединяют игроков, общий дневник и мастера вашей кампании.</p></div></div><div id="party-room-root">${partyRooms.view()}</div><details class="panel personal-journal"><summary>Мой личный дневник</summary><p class="hint">Прежние заметки сохранены здесь. В общую комнату они попадут только после переноса.</p><span class="tag" id="journal-save-hint">АВТОСОХРАНЕНИЕ</span><textarea class="journal-text party-journal" id="party-journal" placeholder="Ваши личные заметки…">${esc(state.journal||'')}</textarea><div id="room-diary-copies">${partyRooms.archiveView()}</div>${partyRooms.hasRoom()?'<button type="button" class="button outline" data-room-action="note-import">Перенести в общий дневник</button>':''}</details>`;}
 function libraryCards(entries,spellsMode){const rows=[];let level=-1;for(const x of entries){if(spellsMode&&x.level!==level){level=x.level;rows.push(`<h2 class="library-group-title">${spellLevelLabel(level)}</h2>`);}rows.push(`<button class="library-card" data-action="${spellsMode?'spell-detail':'feat-detail'}" data-id="${esc(x.id)}"><span>${spellsMode?x.level||'✧':'◇'}</span><div><b>${esc(spellsMode?spellName(x.id):x.label)}</b><small>${esc(spellsMode?(x.schoolRu||x.school)+' · '+(x.level?x.level+' круг':'Заговор'):x.prerequisite||x.category)}</small>${spellsMode?`<em class="spell-tags">${spellSaveAbility(x)?`<i class="save">Испытание: ${spellSaveAbility(x)}</i>`:''}${spellUsesAttackRoll(x)?'<i class="attack">Бросок атаки</i>':''}${x.concentration?'<i>Концентрация</i>':''}${x.ritual?'<i>Ритуал</i>':''}</em>`:''}</div><i>↗</i></button>`);}return rows.join('');}
 function libraryView(){let entries=libraryKind==='spells'?spells:dataset.feats;entries=entries.filter(x=>((libraryKind==='spells'?spellName(x.id):x.label)+' '+(x.name||'')).toLowerCase().includes(filter.toLowerCase()));if(libraryKind==='spells'){if(libraryLevel!=='all')entries=entries.filter(x=>String(x.level)===libraryLevel);if(libraryClass!=='all')entries=entries.filter(x=>x.classes.includes(libraryClass));}entries.sort(libraryKind==='spells'?compareSpells:(a,b)=>a.label.localeCompare(b.label,'ru',{sensitivity:'base'}));const total=entries.length,visible=entries.slice(0,libraryPage*48),filters=libraryKind==='spells'?`<select id="library-level" aria-label="Круг заклинания">${opt('all','Все круги',libraryLevel)}${opt('0','Заговоры',libraryLevel)}${Array.from({length:9},(_,i)=>opt(String(i+1),(i+1)+' круг',libraryLevel)).join('')}</select><select id="library-class" aria-label="Класс заклинания">${opt('all','Все классы',libraryClass)}${dataset.classes.filter(x=>['warlock','wizard','druid','bard','cleric','paladin','ranger','sorcerer'].includes(x.id)).map(x=>opt(x.id,x.label,libraryClass)).join('')}</select>`:'';return `<div class="section-heading"><div><div class="eyebrow muted">ЗНАНИЯ — ТОЖЕ СИЛА</div><h1>Библиотека</h1><p class="hint">${spells.length} заклинаний SRD · ${dataset.feats.length} черт и воззваний вашей кампании</p></div></div><div class="filter-bar library-filters"><input id="library-search" aria-label="Поиск в библиотеке" placeholder="Название на русском или английском…" value="${esc(filter)}"><select id="library-kind" aria-label="Раздел библиотеки">${opt('spells','Заклинания',libraryKind)}${opt('feats','Черты и воззвания',libraryKind)}</select>${filters}</div><div class="library-result-count">Показано ${visible.length} из ${total}</div><div class="library-grid">${libraryCards(visible,libraryKind==='spells')||`<div class="empty-state library-empty"><span>⌕</span><h3>Ничего не найдено</h3><p>Измените запрос или очистите фильтры.</p>${btn('Сбросить фильтры','library-reset','outline')}</div>`}</div>${visible.length<total?`<div class="library-more">${btn(`Показать ещё · осталось ${total-visible.length}`,'library-more','outline')}</div>`:''}`;}
-function showDialog(title,body,wide=false){const dialog=$('#dialog');dialog.innerHTML=`<div class="dialog-header"><div><div class="eyebrow muted">КНИГА СУДЕБ</div><h2>${title}</h2></div><button class="close" data-action="close" aria-label="Закрыть">×</button></div><div class="dialog-body">${body}</div>`;dialog.classList.toggle('wide',wide);dialog.classList.remove('creation-dialog','levelup-dialog');dialog.dataset.flow='';dialog.dataset.returnToSpellPicker='';if(!dialog.open)dialog.showModal();}
+function showDialog(title,body,wide=false){const dialog=$('#dialog');dialog.innerHTML=`<div class="dialog-header"><div><div class="eyebrow muted">КНИГА СУДЕБ</div><h2>${title}</h2></div><button class="close" data-action="close" aria-label="Закрыть">×</button></div><div class="dialog-body">${body}</div>`;dialog.classList.toggle('wide',wide);delete dialog.dataset.characterReader;dialog.classList.remove('creation-dialog','levelup-dialog');dialog.dataset.flow='';dialog.dataset.returnToSpellPicker='';if(!dialog.open)dialog.showModal();}
 function updatePointBuy(){const form=$('#character-form');if(!form)return;const inputs=[...form.querySelectorAll('.point-buy input[name]')];if(!inputs.length)return;const spent=inputs.reduce((sum,input)=>sum+(POINT_BUY_COST[Number(input.value)]??99),0),remaining=27-spent,remainingEl=form.querySelector('[data-point-remaining]'),bar=form.querySelector('.point-buy-bar');if(remainingEl)remainingEl.textContent=remaining;if(bar)bar.classList.toggle('empty',remaining===0);for(const input of inputs){const value=Number(input.value),cost=form.querySelector(`[data-point-cost="${input.name}"]`);if(cost)cost.textContent=`Стоимость: ${POINT_BUY_COST[value]}`;const controls=input.closest('.point-controls');controls.querySelector('[data-delta="-1"]').disabled=value<=8;const nextCost=POINT_BUY_COST[value+1];controls.querySelector('[data-delta="1"]').disabled=value>=15||nextCost-POINT_BUY_COST[value]>remaining;}}
 function editDialog(c,isNew=false){
   if(isNew){
@@ -343,7 +362,7 @@ $('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog'
 $('#dialog').addEventListener('close',()=>render());
 window.addEventListener('storage',e=>{if(e.key===storageKey()){toast('Листы изменены в другой вкладке. Обновите страницу перед редактированием.');}});
 try{
-  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261014-12').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261014-12').then(r=>r.json())]);
+  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261014-13').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261014-13').then(r=>r.json())]);
   const stored=localStorage.getItem(STORE);state=stored?JSON.parse(stored):{characters:partyTemplates(),journal:''};
   if(!Array.isArray(state.characters))throw Error('Повреждено сохранение. Скачайте данные браузера перед сбросом.');
   dataset=normalizeDataset(state.dataset||rawDataset);selected=state.characters[0]?.id;

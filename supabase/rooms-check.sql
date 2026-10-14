@@ -28,7 +28,7 @@ do $$ declare t record; denied boolean:=false; begin
  begin perform public.save_party_note(t.room_id,null,'Bad','No',0); exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
  if not denied then raise exception 'FAIL stranger writes'; end if;
  denied:=false;
- begin perform public.party_character_sheets(t.room_id);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;
+ begin perform public.party_character_sheets(t.room_id);exception when others then if sqlerrm='NOT_ALLOWED' then denied:=true;else raise;end if;end;
  if not denied then raise exception 'FAIL stranger sheets'; end if;
 end $$;
 reset role;
@@ -62,7 +62,7 @@ do $$ declare t record; books jsonb; denied boolean:=false; begin
  if exists(select 1 from public.player_books where user_id=t.player_id) then raise exception 'FAIL private book RLS'; end if;
  perform public.change_party_master(t.room_id,t.player_id);
  if public.list_party_rooms()->0->>'master_id'<>t.player_id::text then raise exception 'FAIL transfer'; end if;
- begin perform public.party_character_sheets(t.room_id);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;
+ perform public.party_character_sheets(t.room_id);begin perform public.party_character_sheet(t.room_id,t.player_id);exception when others then if sqlerrm='MASTER_REQUIRED' then denied:=true;else raise;end if;end;
  if not denied then raise exception 'FAIL former master'; end if;
 end $$;
 reset role;
