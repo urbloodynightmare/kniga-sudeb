@@ -67,7 +67,7 @@ export function icon(name) {
 
 const actions = {
   account:'hero',edit:'edit','actor-edit':'edit','pool-edit':'edit','feature-edit':'edit','resource-edit':'edit','item-edit':'edit','attack-edit':'edit','note-edit':'edit',
-  new:'plus',create:'plus',manage:'crown','item-add':'plus','spell-add':'plus','attack-add':'plus','resource-add':'plus','feature-add':'plus','language-add':'plus','note-new':'edit','new-scene':'plus','add-monster':'plus',manual:'plus',add:'plus',
+  new:'plus','goods-add':'plus','goods-remove':'trash',create:'plus',manage:'crown','item-add':'plus','spell-add':'plus','attack-add':'plus','resource-add':'plus','feature-add':'plus','language-add':'plus','note-new':'edit','new-scene':'plus','add-monster':'plus',manual:'plus',add:'plus',
   delete:'trash','confirm-delete':'trash','item-remove':'trash','attack-remove':'trash','spell-remove':'trash','feature-remove':'trash','resource-remove':'trash','pool-delete':'trash','delete-scene':'trash','delete-room':'trash','note-delete':'trash','note-purge':'trash','remove-member':'trash',remove:'trash',
   import:'upload','import-dataset':'upload','note-import':'upload',export:'download','export-one':'download','export-dataset':'download',template:'download',
   refresh:'refresh','cloud-retry':'refresh','cloud-reload':'refresh','cloud-reload-confirm':'refresh',rotate:'refresh',
