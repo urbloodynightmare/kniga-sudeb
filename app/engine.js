@@ -1,4 +1,4 @@
-import {addBuiltInCharacters} from './character-additions.js?v=20261018-1';
+import {addBuiltInCharacters} from './character-additions.js?v=20261018-2';
 export const STATS = {str:'Сила',dex:'Ловкость',con:'Телосложение',int:'Интеллект',wis:'Мудрость',cha:'Харизма'};
 export const SKILLS = {acrobatics:['Акробатика','dex'],'animal handling':['Уход за животными','wis'],arcana:['Магия','int'],athletics:['Атлетика','str'],deception:['Обман','cha'],history:['История','int'],insight:['Проницательность','wis'],intimidation:['Запугивание','cha'],investigation:['Расследование','int'],medicine:['Медицина','wis'],nature:['Природа','int'],perception:['Внимательность','wis'],performance:['Выступление','cha'],persuasion:['Убеждение','cha'],religion:['Религия','int'],'sleight of hand':['Ловкость рук','dex'],stealth:['Скрытность','dex'],survival:['Выживание','wis']};
 export const mod = n=>Math.floor((n-10)/2);
@@ -139,11 +139,13 @@ export function derive(c,d,validationPass=0){
         }
         case 'asi-pool':case 'asi-flexible':{
           const points=value&&typeof value==='object'&&!Array.isArray(value)?value:{};
-          const allowed=g.options||g.sets?.[0]?.options||Object.keys(STATS);
+          const standardAllowed=g.options||g.sets?.[0]?.options||Object.keys(STATS);
+          const backgroundAsi=prefix.startsWith('backgrounds/')&&!prefix.includes('/feat-'),freeDistribution=backgroundAsi&&c.backgroundAsiFree?.[key]===true;
+          const allowed=freeDistribution?Object.keys(STATS):standardAllowed;
           const total=g.total||g.sets.reduce((n,x)=>n+x.count*x.amount,0), max=g.max||(g.distinct===false?total:1);
           const spent=Object.values(points).reduce((n,x)=>n+(Number(x)||0),0);
           const valid=Object.entries(points).every(([k,v])=>allowed.includes(k)&&Number.isInteger(v)&&v>=0&&v<=max&&s.stats[k]+v<=20)&&spent<=total;
-          s.choices.push({...g,...meta,value:points,allowed,total,max,complete:valid&&spent===total});
+          s.choices.push({...g,...meta,value:points,allowed,standardAllowed,backgroundAsi,freeDistribution,total,max,complete:valid&&spent===total});
           if(valid)Object.entries(points).forEach(([k,v])=>s.stats[k]=Math.min(20,s.stats[k]+v));break;
         }
         default:s.warnings.push('Неизвестное правило: '+g.type);
@@ -240,6 +242,15 @@ export function derive(c,d,validationPass=0){
   s.traits=s.traits.map(t=>({...t,description:String(t.description||'').replaceAll('[MA]',`1к${s.martialArtsDie||6}`).replaceAll('[TECHNIQUE_DC]',String(s.techniqueDC??'—'))}));
   s.pending=s.choices.filter(q=>!q.complete).length;
   return s;
+}
+export function setBackgroundAsiMode(c,d,key,free){
+ const q=derive(c,d).choices.find(q=>q.key===key&&q.backgroundAsi);
+ if(!q)throw Error('Распределение бонусов предыстории недоступно.');
+ const next=structuredClone(c);
+ next.backgroundAsiFree={...(next.backgroundAsiFree&&typeof next.backgroundAsiFree==='object'&&!Array.isArray(next.backgroundAsiFree)?next.backgroundAsiFree:{})};
+ if(free)next.backgroundAsiFree[key]=true;
+ else{delete next.backgroundAsiFree[key];next.choices[key]=Object.fromEntries(Object.entries(q.value).filter(([stat])=>q.standardAllowed.includes(stat)));}
+ return next;
 }
 export function spellCastingStats(s,ability=s.casting?.ability){
  if(!Object.hasOwn(STATS,ability))return null;
