@@ -1,3 +1,4 @@
+import {addBuiltInCharacters} from './character-additions.js?v=20261018-1';
 export const STATS = {str:'Сила',dex:'Ловкость',con:'Телосложение',int:'Интеллект',wis:'Мудрость',cha:'Харизма'};
 export const SKILLS = {acrobatics:['Акробатика','dex'],'animal handling':['Уход за животными','wis'],arcana:['Магия','int'],athletics:['Атлетика','str'],deception:['Обман','cha'],history:['История','int'],insight:['Проницательность','wis'],intimidation:['Запугивание','cha'],investigation:['Расследование','int'],medicine:['Медицина','wis'],nature:['Природа','int'],perception:['Внимательность','wis'],performance:['Выступление','cha'],persuasion:['Убеждение','cha'],religion:['Религия','int'],'sleight of hand':['Ловкость рук','dex'],stealth:['Скрытность','dex'],survival:['Выживание','wis']};
 export const mod = n=>Math.floor((n-10)/2);
@@ -23,6 +24,7 @@ export function normalizeDataset(raw){
     d[key]??=[];if(!Array.isArray(d[key])||d[key].length>1000)throw Error('Неверный раздел '+key);
     const ids=new Set();for(const entry of d[key]){if(typeof entry.id!=='string'||ids.has(entry.id))throw Error('Повторяющийся или неверный id: '+entry.id);ids.add(entry.id);}
   }
+  addBuiltInCharacters(d);
   // Corrections for the supplied 2024 party pack; keep the source file untouched.
   if(d.id==='aventurine-party-complete-2024'){
     for(const id of ['inv-agonizing-blast','inv-repelling-blast','inv-devils-sight','inv-mask-many-faces','inv-misty-visions','inv-otherworldly-leap','inv-fiendish-vigor','inv-lessons-first-ones']){
@@ -85,13 +87,18 @@ export function featReason(f,c,state,ignoreKey=''){
 export function derive(c,d,validationPass=0){
   const level=clamp(c.level,1,20), prof=2+Math.floor((level-1)/4);
   const s={stats:{...c.stats},prof,die:8,saves:new Set(),skills:new Set(),expertise:new Set(),tools:new Set(),languages:new Set(['Общий']),armorProf:new Set(),weaponProf:new Set(),traits:[],resources:[],feats:[],choices:[],equipment:[],gold:0,speed:30,size:'medium',bonuses:[],fixedSpells:[],warnings:[],casting:null};
-  const resources=new Map(),traits=new Map(),expanded=new Set();
+  const resources=new Map(),traits=new Map(),expanded=new Set(),classAttacks=[],abilityIncreases=[];
   function visit(grants,prefix,at,source,depth=0){
     if(depth>12){s.warnings.push('Слишком глубокая цепочка черт');return;}
     (grants||[]).forEach((g,index)=>{
       const key=prefix+'/'+(g.id||index), meta={key,level:at,source};const value=c.choices[key];
+      if(g.excludeSubraces?.includes(c.subraceId)&&d.subraces.some(r=>r.id===c.subraceId&&r.raceId===c.raceId))return;
       switch(g.type){
         case 'hp-die':s.die=g.die;break;
+        case 'martial-arts':s.martialArtsDie=level>=17?12:level>=11?10:level>=5?8:6;break;
+        case 'unarmored-defense':s.unarmoredDefense=g.ability;break;
+        case 'ability-increase':abilityIncreases.push(g);break;
+        case 'class-attack':classAttacks.push({...g,...meta});break;
         case 'saving-throw':g.stats.forEach(x=>s.saves.add(x));break;
         case 'armor-prof':g.armors.forEach(x=>s.armorProf.add(x));break;
         case 'weapon-prof':(g.specific||g.weapons||[]).forEach(x=>s.weaponProf.add(x));break;
@@ -99,9 +106,11 @@ export function derive(c,d,validationPass=0){
         case 'language-fixed':g.languages.forEach(x=>s.languages.add(x));break;
         case 'skill-fixed':g.skills.forEach(x=>s.skills.add(x));break;
         case 'speed':s.speed=g.value;break;
+        case 'swim-speed':s.swimSpeed=g.value;break;
         case 'size':s.size=g.value;break;
         case 'gold':s.gold+=g.amount;break;
         case 'equipment-fixed':g.items.forEach((name,i)=>s.equipment.push({id:key+'/'+i,name,qty:1,source}));break;
+        case 'equipment-selected-tool':{const q=s.choices.find(q=>q.id===g.choiceId&&q.type==='tool-choice');for(const [i,name] of (q?.value||[]).entries())if(q.options?.includes(name))s.equipment.push({id:key+'/'+i,name,qty:1,source});break;}
         case 'trait':traits.set(g.id||key,{...g,...meta,name:cleanName(g.name)});break;
         case 'resource':resources.set(g.id,{...g,...meta});break;
         case 'bonus':s.bonuses.push({...g,...meta});break;
@@ -122,6 +131,7 @@ export function derive(c,d,validationPass=0){
           const valid=chosen.filter(x=>typeof x==='string'&&x.trim()).slice(0,g.count||1);
           const q={...g,...meta,value:chosen,complete:valid.length===(g.count||1)&&new Set(valid).size===valid.length};s.choices.push(q);
           if(g.type==='skill-choice')valid.filter(x=>SKILLS[x]&&(g.options==='any'||!g.options||g.options.includes(x))).forEach(x=>s.skills.add(x));
+          if(g.type==='skill-choice'&&g.allowTools){valid.filter(x=>x.startsWith('tool:')&&g.tools?.includes(x.slice(5))).forEach(x=>s.tools.add(x.slice(5)));if(valid.some(x=>!SKILLS[x]&&!(x.startsWith('tool:')&&g.tools?.includes(x.slice(5)))))q.complete=false;}
           if(g.type==='expertise-choice')valid.forEach(x=>s.expertise.add(x));
           if(g.type==='tool-choice')valid.forEach(x=>s.tools.add(x));
           if(g.type==='language-choice')valid.forEach(x=>s.languages.add(x));
@@ -149,6 +159,7 @@ export function derive(c,d,validationPass=0){
     if(f.featId)visit([{type:'feat',featId:f.featId}],'manual/'+f.id,1,'Добавлено вручную');
     else traits.set(f.id,{...f,source:'Добавлено вручную',level:1});
   }
+  for(const g of abilityIncreases)for(const stat of g.stats||[])if(Object.hasOwn(STATS,stat))s.stats[stat]=Math.max(s.stats[stat],Math.min(g.max||20,s.stats[stat]+g.amount));
   const equippedItems=[...s.equipment,...(c.inventory||[])].map(item=>({...item,...(c.itemOverrides?.[item.id]||{})})).filter(item=>!item.removed&&Number(item.qty)>0&&item.equipped);
   s.itemBonuses={ac:0,spellAttack:0,spellDC:0,spellSave:0,attack:0,damage:0,meleeAttack:0,meleeDamage:0,rangedAttack:0,rangedDamage:0};s.weaponItems=[];s.advantageChecks=new Set();s.equippedArmorType='';
   for(const item of equippedItems){
@@ -174,12 +185,15 @@ export function derive(c,d,validationPass=0){
   s.hp=clamp(s.hpMax-c.damage,0,s.hpMax);
   s.initiative=s.mods.dex+(bonuses.initiative||0);s.speed+=bonuses['speed.walk']||0;
   const armor={leather:11+s.mods.dex,studded:12+s.mods.dex,hide:12+Math.min(2,s.mods.dex),'chain-shirt':13+Math.min(2,s.mods.dex),scale:14+Math.min(2,s.mods.dex),breastplate:14+Math.min(2,s.mods.dex),'half-plate':15+Math.min(2,s.mods.dex),ring:14,chain:16,splint:17,plate:18};
-  const unarmored=c.mageArmor?13+s.mods.dex:10+s.mods.dex;
+  const unarmoredEligible=(!s.equippedArmorType||s.equippedArmorType==='clothing')&&!equippedItems.some(item=>item.itemType==='shield');
+  const unarmored=Math.max(c.mageArmor?13+s.mods.dex:10+s.mods.dex,unarmoredEligible&&s.unarmoredDefense?10+s.mods.dex+(s.mods[s.unarmoredDefense]||0):0);
   s.ac=(armor[s.equippedArmorType]??unarmored)+(bonuses.ac||0)+s.itemBonuses.ac;
+  s.martialArtsActive=!!s.martialArtsDie&&unarmoredEligible;
+  if(s.martialArtsDie&&level>=2&&unarmoredEligible)s.speed+=level>=18?30:level>=14?25:level>=10?20:level>=6?15:10;
   s.skillBonuses=Object.fromEntries(Object.entries(SKILLS).map(([k,[,stat]])=>[k,s.mods[stat]+(s.skills.has(k)?prof:0)+(s.expertise.has(k)&&s.skills.has(k)?prof:0)+(bonuses['skill.'+k]||0)]));
   s.passive=10+s.skillBonuses.perception;
   s.passiveInsight=10+s.skillBonuses.insight+(['all','skills','ability:wis','skill:insight'].some(k=>s.advantageChecks.has(k))?5:0);
-  s.maneuverAbility=c.maneuverAbility==='auto'?(s.mods.str>=s.mods.dex?'str':'dex'):Object.hasOwn(STATS,c.maneuverAbility)?c.maneuverAbility:null;
+  s.maneuverAbility=c.maneuverAbility==='auto'?(s.mods.str>=s.mods.dex?'str':'dex'):Object.hasOwn(STATS,c.maneuverAbility)?c.maneuverAbility:s.martialArtsDie&&level>=2?'wis':null;
   s.maneuverDC=s.maneuverAbility?8+prof+s.mods[s.maneuverAbility]+clamp(Number(c.maneuverDCBonus)||0,-20,20):null;
   s.saveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.mods[k]+(s.saves.has(k)?prof:0)]));
   s.spellSaveBonuses=Object.fromEntries(Object.keys(STATS).map(k=>[k,s.saveBonuses[k]+s.itemBonuses.spellSave]));
@@ -219,8 +233,34 @@ export function derive(c,d,validationPass=0){
       :'При попадании можете оттолкнуть цель Большого размера или меньше на 10 футов.';
     for(const spellId of targets)(s.spellEnhancements[spellId]??=[]).push({id:feat.id,name:cleanName(feat.label),effect,source:feat.label});
   }
+  s.techniqueDC=s.martialArtsDie&&level>=2?8+prof+s.mods.wis:null;
+  const martialAbility=s.mods.dex>=s.mods.str?'dex':'str';
+  s.classAttacks=classAttacks.map(a=>({...a,ability:a.ability==='martial'?martialAbility:a.ability,die:s.martialArtsActive?`1d${s.martialArtsDie}`:a.id==='purple-zidian'?'1d4':'1d6'}));
+  if(s.martialArtsDie)s.classAttacks.unshift({id:'monk-unarmed',name:'Безоружный удар',ability:s.martialArtsActive?martialAbility:'str',die:s.martialArtsActive?`1d${s.martialArtsDie}`:'1',damageType:level>=6?'дробящий или силовой':'дробящий',reach:5,unarmed:true,source:'Боевые искусства',notes:s.martialArtsActive?'Можно совершить бонусным действием. Шквал ударов расходует концентрацию.':'Боевые искусства не действуют: снимите доспех и щит.'});
+  s.traits=s.traits.map(t=>({...t,description:String(t.description||'').replaceAll('[MA]',`1к${s.martialArtsDie||6}`).replaceAll('[TECHNIQUE_DC]',String(s.techniqueDC??'—'))}));
   s.pending=s.choices.filter(q=>!q.complete).length;
   return s;
+}
+export function spellCastingStats(s,ability=s.casting?.ability){
+ if(!Object.hasOwn(STATS,ability))return null;
+ return {ability,attack:s.prof+s.mods[ability]+(s.itemBonuses.spellAttack||0),dc:8+s.prof+s.mods[ability]+(s.itemBonuses.spellDC||0)};
+}
+export function monkWeaponProfile(s,type,die,ability){
+ const allowed=['club','dagger','greatclub','handaxe','javelin','lightHammer','mace','quarterstaff','sickle','spear','shortsword','scimitar'];
+ if(!s.martialArtsActive||!allowed.includes(type))return {die,ability};
+ const martialAbility=s.mods.dex>=s.mods.str?'dex':'str';
+ const normal=/^1d(\d+)$/.exec(die);
+ return {die:normal&&Number(normal[1])<s.martialArtsDie?`1d${s.martialArtsDie}`:die,ability:martialAbility};
+}
+export function spendTechnique(c,s,id){
+ const technique=s.traits.find(t=>t.id===id&&t.resourceId&&Number.isInteger(t.cost)&&t.cost>0);
+ if(!technique)throw Error('Техника недоступна на этом уровне.');
+ const focus=s.resources.find(r=>r.id===technique.resourceId),charge=technique.chargeId?s.resources.find(r=>r.id===technique.chargeId):null;
+ if(!focus||focus.remaining<technique.cost)throw Error('Недостаточно очков концентрации.');
+ if(technique.chargeId&&(!charge||charge.remaining<1))throw Error('Способность восстановится после долгого отдыха.');
+ const next=structuredClone(c);next.spent[focus.id]=(next.spent[focus.id]||0)+technique.cost;
+ if(charge)next.spent[charge.id]=(next.spent[charge.id]||0)+1;
+ return next;
 }
 export function rest(c,s,long){
   const next=structuredClone(c);

@@ -1,11 +1,11 @@
-import {derive,STATS,SKILLS,signed} from './engine.js?v=20261015-3';
+import {derive,STATS,SKILLS,signed,spellCastingStats} from './engine.js?v=20261018-1';
 
 // Only these public game values are shared with a room's master.
 export function masterSummary(c,dataset){
- const s=derive(c,dataset),label=(kind,id)=>dataset[kind]?.find(x=>x.id===id)?.label||'';
+ const s=derive(c,dataset),label=(kind,id)=>dataset[kind]?.find(x=>x.id===id)?.label||'',magic=spellCastingStats(s,s.casting?.ability||s.fixedSpells.find(p=>p.ability)?.ability);
  return {id:c.id,name:c.name,level:c.level,className:label('classes',c.classId),subclassName:c.level>=3?label('subclasses',c.subclassId):'',
  hp:s.hp,hpMax:s.hpMax,tempHp:Number(c.tempHp)||0,ac:s.ac,initiative:s.initiative,prof:s.prof,speed:s.speed,passive:s.passive,passiveInsight:s.passiveInsight,maneuverDC:s.maneuverDC,maneuverAbility:s.maneuverAbility?STATS[s.maneuverAbility]:null,
- spellDC:s.casting?s.spellDC:null,spellAttack:s.casting?s.spellAttack:null,castingAbility:s.casting?STATS[s.casting.ability]:null,
+ spellDC:magic?.dc??null,spellAttack:magic?.attack??null,castingAbility:magic?STATS[magic.ability]:null,
  abilities:Object.keys(STATS).map(key=>({key,label:STATS[key],score:s.stats[key],modifier:s.mods[key],save:s.mods[key]+(s.saves.has(key)?s.prof:0)})),
  skills:Object.entries(SKILLS).map(([key,[label,ability]])=>({key,label,ability,bonus:s.skillBonuses[key],proficient:s.skills.has(key),expertise:s.skills.has(key)&&s.expertise.has(key)})),
  conditions:[...(c.conditions||[])],updatedAt:new Date().toISOString()};

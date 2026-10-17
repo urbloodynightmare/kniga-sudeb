@@ -9309,6 +9309,1600 @@
           ]
         }
       ]
+    },
+    {
+      "id": "monk",
+      "label": "Монах",
+      "subclassLevel": 3,
+      "info": {
+        "primaryStats": [
+          [
+            "dex",
+            "wis"
+          ]
+        ],
+        "complexity": 2,
+        "tags": [
+          "Боевые искусства",
+          "Концентрация"
+        ]
+      },
+      "grants": [
+        {
+          "type": "hp-die",
+          "die": 8
+        },
+        {
+          "type": "saving-throw",
+          "stats": [
+            "str",
+            "dex"
+          ]
+        },
+        {
+          "type": "weapon-prof",
+          "weapons": [
+            "weapon-simple"
+          ]
+        },
+        {
+          "type": "weapon-prof",
+          "specific": [
+            "Короткий меч",
+            "Скимитар",
+            "Ручной арбалет"
+          ]
+        },
+        {
+          "type": "skill-choice",
+          "id": "monk-skills",
+          "count": 2,
+          "options": [
+            "acrobatics",
+            "athletics",
+            "history",
+            "insight",
+            "religion",
+            "stealth"
+          ]
+        },
+        {
+          "type": "tool-choice",
+          "id": "monk-tool",
+          "count": 1,
+          "options": [
+            "Инструменты алхимика",
+            "Инструменты гончара",
+            "Инструменты каллиграфа",
+            "Инструменты каменщика",
+            "Инструменты картографа",
+            "Инструменты кожевника",
+            "Инструменты кузнеца",
+            "Инструменты пивовара",
+            "Инструменты плотника",
+            "Инструменты повара",
+            "Инструменты резчика по дереву",
+            "Инструменты ремонтника",
+            "Инструменты сапожника",
+            "Инструменты стеклодува",
+            "Инструменты ткача",
+            "Инструменты художника",
+            "Инструменты ювелира",
+            "Барабан",
+            "Волынка",
+            "Лира",
+            "Лютня",
+            "Рожок",
+            "Свирель",
+            "Скрипка",
+            "Флейта",
+            "Цимбалы",
+            "Шалмей"
+          ]
+        },
+        {
+          "type": "pick-one",
+          "id": "monk-equipment",
+          "label": "Начальное снаряжение монаха",
+          "options": [
+            {
+              "label": "Копьё, 5 кинжалов, набор путешественника и 11 зм",
+              "grants": [
+                {
+                  "type": "equipment-fixed",
+                  "items": [
+                    "Копьё",
+                    "Кинжал",
+                    "Кинжал",
+                    "Кинжал",
+                    "Кинжал",
+                    "Кинжал",
+                    "Набор путешественника"
+                  ]
+                },
+                {
+                  "type": "gold",
+                  "amount": 11
+                },
+                {
+                  "type": "equipment-selected-tool",
+                  "choiceId": "monk-tool"
+                }
+              ]
+            },
+            {
+              "label": "50 золотых монет",
+              "grants": [
+                {
+                  "type": "gold",
+                  "amount": 50
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "martial-arts",
+          "id": "monk-martial-arts"
+        },
+        {
+          "type": "unarmored-defense",
+          "ability": "wis"
+        },
+        {
+          "type": "trait",
+          "id": "monk-martial-arts",
+          "name": "Боевые искусства",
+          "description": "Без доспеха и щита, будучи безоружным или используя только монашеское оружие, можете совершать безоружный удар бонусным действием. Для атак и урона используйте Силу или Ловкость. Кость боевых искусств: [MA]. Она заменяет обычную кость урона безоружного удара или монашеского оружия. Монашеское оружие: простое ближнего боя и воинское ближнего боя со свойством «лёгкое». Для захвата и толчка безоружным ударом можно использовать Ловкость вместо Силы."
+        },
+        {
+          "type": "trait",
+          "id": "monk-unarmored-defense",
+          "name": "Защита без доспехов",
+          "description": "Если на вас нет доспеха и щита, базовый КД равен 10 + модификатор Ловкости + модификатор Мудрости. Это отдельная формула, она не складывается с Доспехами мага."
+        }
+      ],
+      "leveledGrants": [
+        {
+          "level": 2,
+          "grants": [
+            {
+              "type": "resource",
+              "id": "monk-focus",
+              "name": "Очки концентрации",
+              "maxExpr": "[LVL]",
+              "isShortRest": true,
+              "isLongRest": true
+            },
+            {
+              "type": "resource",
+              "id": "monk-metabolism",
+              "name": "Сверхъестественный метаболизм",
+              "max": 1,
+              "isLongRest": true
+            },
+            {
+              "type": "trait",
+              "id": "monk-focus",
+              "name": "Концентрация монаха",
+              "description": "Запас очков концентрации равен уровню монаха. Весь запас восстанавливается после короткого или долгого отдыха. Сложность техник: 8 + мастерство + модификатор Мудрости; сейчас Сл [TECHNIQUE_DC]. Это классовый ресурс, отдельный от концентрации на заклинаниях."
+            },
+            {
+              "type": "trait",
+              "id": "monk-flurry",
+              "name": "Шквал ударов",
+              "description": "Бонусное действие · 1 очко концентрации. Совершите два безоружных удара. С 10-го уровня — три. Каждый наносит [MA] + модификатор выбранной характеристики.",
+              "resourceId": "monk-focus",
+              "cost": 1
+            },
+            {
+              "type": "trait",
+              "id": "monk-patient-defense",
+              "name": "Терпеливая защита",
+              "description": "Бонусное действие: Отход бесплатно. За 1 очко концентрации совершите одновременно Отход и Уклонение. С 10-го уровня при трате очка также получите временные хиты: два броска кости боевых искусств.",
+              "resourceId": "monk-focus",
+              "cost": 1
+            },
+            {
+              "type": "trait",
+              "id": "monk-step-wind",
+              "name": "Шаг ветра",
+              "description": "Бонусное действие: Рывок бесплатно. За 1 очко концентрации совершите одновременно Рывок и Отход; дальность прыжка удваивается до конца хода. С 10-го уровня при трате очка можно перемещать с собой согласное существо не больше Большого в пределах 5 футов; его перемещение не вызывает провоцированных атак.",
+              "resourceId": "monk-focus",
+              "cost": 1
+            },
+            {
+              "type": "trait",
+              "id": "monk-movement",
+              "name": "Передвижение без доспехов",
+              "description": "Без доспеха и щита скорость увеличивается на 10 футов; с 6-го уровня — на 15, с 10-го — на 20, с 14-го — на 25, с 18-го — на 30. Бонус уже учтён в скорости листа."
+            },
+            {
+              "type": "trait",
+              "id": "monk-metabolism",
+              "name": "Сверхъестественный метаболизм",
+              "description": "Когда бросаете инициативу, можете восстановить все очки концентрации и хиты: уровень монаха + один бросок кости боевых искусств [MA]. Одно применение до долгого отдыха."
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-deflect",
+              "name": "Отражение атак",
+              "description": "Реакция при попадании атакой с дробящим, колющим или рубящим уроном: уменьшите весь урон этой атаки на 1к10 + Ловкость + уровень монаха. Если уменьшили до 0, за 1 очко концентрации можно перенаправить удар. Видимая цель в 5 футах для ближней атаки или в 60 футах без полного укрытия для дальней: испытание Ловкости Сл [TECHNIQUE_DC]; при провале — два броска [MA] + Ловкость урона того же типа.",
+              "resourceId": "monk-focus",
+              "cost": 1
+            }
+          ]
+        },
+        {
+          "level": 4,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-slow-fall",
+              "name": "Медленное падение",
+              "description": "Реакция при падении: уменьшите урон от падения на пятикратный уровень монаха."
+            },
+            {
+              "type": "pick-one",
+              "label": "Общая черта или улучшение характеристик",
+              "options": [
+                {
+                  "label": "Улучшение характеристик",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "asi-general",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Боевой заклинатель",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "war-caster-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Снайпер заклинаний",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "spell-sniper-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся фей",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "fey-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся тени",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "shadow-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скороход",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "speedy-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скрытный",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "skulker-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Оборонительный дуэлянт",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "defensive-duelist-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Парное оружие",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "dual-wielder-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер большого оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "great-weapon-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер древкового оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "polearm-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Меткий стрелок",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sharpshooter-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Эксперт по арбалетам",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "crossbow-expert-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Страж",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sentinel-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Убийца магов",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "mage-slayer-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Вдохновляющий лидер",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "inspiring-leader-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Адепт стихий",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "elemental-adept-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Сила",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-str-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Ловкость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-dex-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Телосложение",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-con-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Интеллект",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-int-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Мудрость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-wis-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Харизма",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-cha-2024",
+                      "category": "general"
+                    }
+                  ]
+                }
+              ],
+              "id": "monk-feat-4"
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-extra-attack",
+              "name": "Дополнительная атака",
+              "description": "Когда совершаете действие Атака в свой ход, можете атаковать дважды вместо одного раза."
+            },
+            {
+              "type": "trait",
+              "id": "monk-stunning",
+              "name": "Ошеломляющий удар",
+              "description": "Один раз за ход при попадании монашеским оружием или безоружным ударом потратьте 1 очко концентрации. Испытание Телосложения Сл [TECHNIQUE_DC]. Провал: цель ошеломлена до начала вашего следующего хода. Успех: до этого момента скорость цели уменьшается вдвое, а следующий бросок атаки против неё совершается с преимуществом.",
+              "resourceId": "monk-focus",
+              "cost": 1
+            }
+          ]
+        },
+        {
+          "level": 6,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-empowered",
+              "name": "Усиленные удары",
+              "description": "Когда наносите урон безоружным ударом, можно заменить его обычный тип на силовой."
+            }
+          ]
+        },
+        {
+          "level": 7,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-evasion",
+              "name": "Увёртливость",
+              "description": "Если успешное испытание Ловкости должно уменьшить урон вдвое, вместо этого не получаете урона при успехе и получаете половину при провале. Не действует при состоянии Недееспособный."
+            }
+          ]
+        },
+        {
+          "level": 8,
+          "grants": [
+            {
+              "type": "pick-one",
+              "label": "Общая черта или улучшение характеристик",
+              "options": [
+                {
+                  "label": "Улучшение характеристик",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "asi-general",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Боевой заклинатель",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "war-caster-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Снайпер заклинаний",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "spell-sniper-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся фей",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "fey-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся тени",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "shadow-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скороход",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "speedy-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скрытный",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "skulker-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Оборонительный дуэлянт",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "defensive-duelist-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Парное оружие",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "dual-wielder-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер большого оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "great-weapon-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер древкового оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "polearm-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Меткий стрелок",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sharpshooter-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Эксперт по арбалетам",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "crossbow-expert-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Страж",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sentinel-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Убийца магов",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "mage-slayer-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Вдохновляющий лидер",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "inspiring-leader-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Адепт стихий",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "elemental-adept-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Сила",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-str-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Ловкость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-dex-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Телосложение",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-con-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Интеллект",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-int-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Мудрость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-wis-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Харизма",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-cha-2024",
+                      "category": "general"
+                    }
+                  ]
+                }
+              ],
+              "id": "monk-feat-8"
+            }
+          ]
+        },
+        {
+          "level": 9,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-acrobatic",
+              "name": "Акробатическое передвижение",
+              "description": "Без доспеха и щита можете в свой ход перемещаться по вертикальным поверхностям и жидкостям, не падая во время перемещения."
+            }
+          ]
+        },
+        {
+          "level": 10,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-heightened",
+              "name": "Усиленная концентрация",
+              "description": "Шквал ударов за 1 очко даёт три безоружных удара. Терпеливая защита за очко также даёт временные хиты, равные двум броскам [MA]. Шаг ветра за очко позволяет перемещать с собой согласное существо не больше Большого в 5 футах."
+            },
+            {
+              "type": "trait",
+              "id": "monk-self-restoration",
+              "name": "Самовосстановление",
+              "description": "В конце каждого своего хода можете снять с себя одно состояние: Очарованный, Испуганный или Отравленный. Отказ от еды и питья не даёт вам уровней истощения."
+            }
+          ]
+        },
+        {
+          "level": 12,
+          "grants": [
+            {
+              "type": "pick-one",
+              "label": "Общая черта или улучшение характеристик",
+              "options": [
+                {
+                  "label": "Улучшение характеристик",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "asi-general",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Боевой заклинатель",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "war-caster-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Снайпер заклинаний",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "spell-sniper-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся фей",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "fey-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся тени",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "shadow-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скороход",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "speedy-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скрытный",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "skulker-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Оборонительный дуэлянт",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "defensive-duelist-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Парное оружие",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "dual-wielder-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер большого оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "great-weapon-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер древкового оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "polearm-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Меткий стрелок",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sharpshooter-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Эксперт по арбалетам",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "crossbow-expert-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Страж",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sentinel-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Убийца магов",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "mage-slayer-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Вдохновляющий лидер",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "inspiring-leader-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Адепт стихий",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "elemental-adept-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Сила",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-str-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Ловкость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-dex-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Телосложение",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-con-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Интеллект",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-int-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Мудрость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-wis-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Харизма",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-cha-2024",
+                      "category": "general"
+                    }
+                  ]
+                }
+              ],
+              "id": "monk-feat-12"
+            }
+          ]
+        },
+        {
+          "level": 13,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-deflect-energy",
+              "name": "Отражение энергии",
+              "description": "Отражение атак теперь работает против атак с любым типом урона. Остальные условия и стоимость перенаправления не меняются."
+            }
+          ]
+        },
+        {
+          "level": 14,
+          "grants": [
+            {
+              "type": "saving-throw",
+              "stats": [
+                "str",
+                "dex",
+                "con",
+                "int",
+                "wis",
+                "cha"
+              ]
+            },
+            {
+              "type": "trait",
+              "id": "monk-disciplined",
+              "name": "Дисциплинированный выживший",
+              "description": "Владение всеми спасбросками уже учтено в листе. При провале спасброска можете потратить 1 очко концентрации, чтобы перебросить его; новый результат обязателен.",
+              "resourceId": "monk-focus",
+              "cost": 1
+            }
+          ]
+        },
+        {
+          "level": 15,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-perfect-focus",
+              "name": "Совершенная концентрация",
+              "description": "Когда бросаете инициативу и не используете Сверхъестественный метаболизм, восстанавливаете запас до 4 очков концентрации, если оставалось 3 или меньше."
+            }
+          ]
+        },
+        {
+          "level": 16,
+          "grants": [
+            {
+              "type": "pick-one",
+              "label": "Общая черта или улучшение характеристик",
+              "options": [
+                {
+                  "label": "Улучшение характеристик",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "asi-general",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Боевой заклинатель",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "war-caster-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Снайпер заклинаний",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "spell-sniper-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся фей",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "fey-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся тени",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "shadow-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скороход",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "speedy-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скрытный",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "skulker-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Оборонительный дуэлянт",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "defensive-duelist-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Парное оружие",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "dual-wielder-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер большого оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "great-weapon-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер древкового оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "polearm-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Меткий стрелок",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sharpshooter-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Эксперт по арбалетам",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "crossbow-expert-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Страж",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sentinel-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Убийца магов",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "mage-slayer-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Вдохновляющий лидер",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "inspiring-leader-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Адепт стихий",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "elemental-adept-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Сила",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-str-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Ловкость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-dex-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Телосложение",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-con-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Интеллект",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-int-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Мудрость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-wis-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Харизма",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-cha-2024",
+                      "category": "general"
+                    }
+                  ]
+                }
+              ],
+              "id": "monk-feat-16"
+            }
+          ]
+        },
+        {
+          "level": 18,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "monk-superior-defense",
+              "name": "Превосходная защита",
+              "description": "В начале своего хода потратьте 3 очка концентрации. На 1 минуту получаете сопротивление всем типам урона, кроме силового. Эффект заканчивается раньше при состоянии Недееспособный.",
+              "resourceId": "monk-focus",
+              "cost": 3
+            }
+          ]
+        },
+        {
+          "level": 19,
+          "grants": [
+            {
+              "type": "pick-one",
+              "label": "Общая черта или улучшение характеристик",
+              "options": [
+                {
+                  "label": "Улучшение характеристик",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "asi-general",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Боевой заклинатель",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "war-caster-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Снайпер заклинаний",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "spell-sniper-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся фей",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "fey-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Коснувшийся тени",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "shadow-touched-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скороход",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "speedy-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Скрытный",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "skulker-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Оборонительный дуэлянт",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "defensive-duelist-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Парное оружие",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "dual-wielder-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер большого оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "great-weapon-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Мастер древкового оружия",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "polearm-master-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Меткий стрелок",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sharpshooter-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Эксперт по арбалетам",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "crossbow-expert-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Страж",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "sentinel-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Убийца магов",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "mage-slayer-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Вдохновляющий лидер",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "inspiring-leader-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Адепт стихий",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "elemental-adept-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Сила",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-str-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Ловкость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-dex-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Телосложение",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-con-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Интеллект",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-int-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Мудрость",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-wis-2024",
+                      "category": "general"
+                    }
+                  ]
+                },
+                {
+                  "label": "Стойкий: Харизма",
+                  "grants": [
+                    {
+                      "type": "feat",
+                      "featId": "resilient-cha-2024",
+                      "category": "general"
+                    }
+                  ]
+                }
+              ],
+              "id": "monk-feat-19"
+            }
+          ]
+        },
+        {
+          "level": 20,
+          "grants": [
+            {
+              "type": "ability-increase",
+              "stats": [
+                "dex",
+                "wis"
+              ],
+              "amount": 4,
+              "max": 25
+            },
+            {
+              "type": "trait",
+              "id": "monk-body-mind",
+              "name": "Тело и разум",
+              "description": "Ловкость и Мудрость увеличены на 4, максимум до 25. Бонус уже учтён в характеристиках."
+            }
+          ]
+        }
+      ]
     }
   ],
   "subclasses": [
@@ -9901,6 +11495,148 @@
           ]
         }
       ]
+    },
+    {
+      "id": "purple-lightning",
+      "classId": "monk",
+      "label": "Путь Пурпурной Молнии",
+      "homebrew": true,
+      "info": {
+        "tagline": "Домашний подкласс: духовное оружие, молния и контроль",
+        "tags": [
+          "Хоумбрю",
+          "Цзыдянь",
+          "Саньду"
+        ],
+        "source": "https://chatgpt.com/s/t_6ad40029a3d4819185781a760efc3dd0",
+        "version": "1.0"
+      },
+      "grants": [
+        {
+          "type": "trait",
+          "id": "purple-inheritor",
+          "name": "Наследник Пурпурной Молнии",
+          "description": "Домашние правила, версия 1.0. С 3-го уровня можете призывать Цзыдянь и Саньду как своё духовное оружие. Цзыдянь — кольцо, без действия превращающееся в одноручный хлыст: досягаемость 10 футов, фехтовальное, магическое, монашеское; урон электричеством [MA] + характеристика. Кольцо нельзя снять обычным обезоруживанием. Саньду — одноручный короткий меч с рубящим уроном [MA] + характеристика, лёгкий, фехтовальный, монашеский. Призвать Саньду в свободную руку или убрать его можно бонусным действием. Эти оружия не дают числового бонуса зачарования и не требуют настройки. Для атаки нужна свободная соответствующая рука; хлыст не считается безоружным ударом. Атаки в листе — заготовки для оружия в руке."
+        },
+        {
+          "type": "class-attack",
+          "id": "purple-zidian",
+          "name": "Цзыдянь",
+          "ability": "martial",
+          "damageType": "электричество",
+          "reach": 10,
+          "notes": "Монашеский хлыст · одноручное · фехтовальное · магическое. Техники расходуют общий запас концентрации."
+        },
+        {
+          "type": "class-attack",
+          "id": "purple-sandu",
+          "name": "Саньду",
+          "ability": "martial",
+          "damageType": "рубящий",
+          "reach": 5,
+          "notes": "Монашеский короткий меч · лёгкое · одноручное · фехтовальное. Не безоружный удар."
+        },
+        {
+          "type": "trait",
+          "id": "purple-limits",
+          "name": "Правила духовных техник",
+          "description": "Сл техник: [TECHNIQUE_DC] = 8 + мастерство + Мудрость. Все платные техники используют очки концентрации монаха. Не более одной техники Цзыдяня за любой ход, включая чужой; техники монаха этим ограничением не затронуты. К одному попаданию применяйте только одну технику Цзыдяня. Для Удара молнии, Оков, Нити спасения и Громовой расправы цель должна быть не дальше 10 футов, кроме усиления формы 17-го уровня. Урон техник и эффекты с ограничением размера не обходят иммунитеты. Все условия, перемещение и длительность отслеживаются за столом; кнопка применения списывает ресурс."
+        },
+        {
+          "type": "trait",
+          "id": "purple-strike",
+          "name": "Удар пурпурной молнии",
+          "description": "При попадании Цзыдянем · 1 очко концентрации · один раз за ход. Дополнительный урон электричеством: [MA]. Цель не может совершать реакции до начала своего следующего хода. Нельзя совместить с другой техникой Цзыдяня на этом ходу.",
+          "resourceId": "monk-focus",
+          "cost": 1,
+          "purpleTechnique": true
+        },
+        {
+          "type": "trait",
+          "id": "purple-bonds",
+          "name": "Пурпурные оковы",
+          "description": "При попадании Цзыдянем · 1 очко концентрации · испытание Силы Сл [TECHNIQUE_DC]. Цель не больше Большого при провале схвачена до конца вашего следующего хода. Её скорость равна 0. Пока удерживаете цель, не можете атаковать Цзыдянем; другая свободная рука доступна. Если цель оказывается вне досягаемости, захват заканчивается. Цель может действием повторить испытание Силы. Можно отпустить её без действия. Для этой техники не действует преимущество на атаки из-за схватывания: это именно состояние Схваченный, не Опутанный.",
+          "resourceId": "monk-focus",
+          "cost": 1,
+          "purpleTechnique": true
+        },
+        {
+          "type": "trait",
+          "id": "purple-rescue",
+          "name": "Нить спасения",
+          "description": "Реакция · 1 очко концентрации. Когда видимое существо не больше Большого в досягаемости Цзыдяня начинает падать, остановите его падение, если имеете надёжную опору и не удерживаете другую цель. Согласная цель не делает бросок; несогласная избегает захвата при успехе испытания Ловкости Сл [TECHNIQUE_DC]. Вы удерживаете существо до конца следующего своего хода: пока держите, не можете атаковать Цзыдянем. В свой ход вместо одной атаки можно подтянуть цель на 10 футов к свободной опоре. Можно отпустить без действия. Для особенно тяжёлого груза мастер может потребовать Атлетику.",
+          "resourceId": "monk-focus",
+          "cost": 1,
+          "purpleTechnique": true
+        },
+        {
+          "type": "trait",
+          "id": "purple-cleanse",
+          "name": "Очищение от скверны",
+          "description": "Действие · 1 очко концентрации · касание Цзыдянем. Узнайте, есть ли на цели магическое воздействие или одержимость; школа, природа эффекта и личность сущности не раскрываются. Вселившаяся сущность делает испытание Харизмы Сл [TECHNIQUE_DC]. При провале её присутствие становится заметно до конца вашего следующего хода, но сущность не изгоняется и не теряет контроль над носителем. Для изгнания нужны иные способности или сюжетное условие.",
+          "resourceId": "monk-focus",
+          "cost": 1,
+          "purpleTechnique": true
+        },
+        {
+          "type": "trait",
+          "id": "purple-sandu-flow",
+          "name": "Отражение духовного потока",
+          "description": "Один раз в свой ход при попадании Саньду можно отказаться от всего урона этого попадания и узнать, действует ли на цель хотя бы один магический эффект. Не раскрывает название, источник или свойства эффекта и не заменяет Опознание. Очки концентрации не требуются."
+        }
+      ],
+      "leveledGrants": [
+        {
+          "level": 6,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "purple-thunder",
+              "name": "Громовая расправа",
+              "description": "При попадании Цзыдянем · 2 очка концентрации · один раз за ход. Дополнительный урон электричеством: два броска [MA]. Цель не больше Большого делает испытание Силы Сл [TECHNIQUE_DC]; при провале оттолкните её на 10 футов от себя. Дополнительный урон не зависит от спасброска. Это замена Удару пурпурной молнии на данном попадании, а не складывающийся эффект; реакций не лишает.",
+              "resourceId": "monk-focus",
+              "cost": 2,
+              "purpleTechnique": true
+            }
+          ]
+        },
+        {
+          "level": 11,
+          "grants": [
+            {
+              "type": "trait",
+              "id": "purple-judgment",
+              "name": "Суд Саньду Шэншоу",
+              "description": "В свой ход, вместо одной атаки действия Атака · 3 очка концентрации. Если никого не удерживаете Цзыдянем, сделайте по одной отдельной атаке хлыстом по двум разным существам не больше Большого в его досягаемости. Каждое попадание наносит обычный урон оружия; попавшая под удар цель делает испытание Силы Сл [TECHNIQUE_DC] и при провале схвачена до конца вашего следующего хода. Можно удерживать до двух целей этой техникой; пока удерживаете хотя бы одну, нельзя атаковать Цзыдянем. Освобождение — действием повторить испытание; выход из досягаемости или ваше добровольное отпускание также прекращают захват. На эти атаки не накладываются другие платные техники Цзыдяня; остальную атаку действия можно сделать Саньду или безоружным ударом.",
+              "resourceId": "monk-focus",
+              "cost": 3,
+              "purpleTechnique": true
+            }
+          ]
+        },
+        {
+          "level": 17,
+          "grants": [
+            {
+              "type": "resource",
+              "id": "purple-storm",
+              "name": "Владыка Пурпурной Молнии",
+              "max": 1,
+              "isLongRest": true
+            },
+            {
+              "type": "trait",
+              "id": "purple-storm-form",
+              "name": "Владыка Пурпурной Молнии",
+              "description": "Бонусное действие · 4 очка концентрации · одно применение до долгого отдыха · длительность 1 минута, без концентрации на заклинании. Досягаемость Цзыдяня и его техник увеличивается до 20 футов. Один раз в свой ход при попадании Цзыдянем выберите: добавить один бросок [MA] электричеством к урону этой цели ИЛИ заставить другое видимое существо в 10 футах от цели и в 20 футах от вас сделать испытание Ловкости Сл [TECHNIQUE_DC]; при провале оно получает [MA] электричеством, при успехе — ничего. Эта разрядная дуга не является атакой и не переносит оковы или иные эффекты попадания. Бонус формы допускается вместе с одной платной техникой; число атак не увеличивается. Форма заканчивается при Недееспособности или по вашему желанию без действия. По окончании обычная досягаемость возвращается; захваты вне неё прекращаются. Бонусный урон, увеличенная досягаемость и окончание формы применяются вручную.",
+              "resourceId": "monk-focus",
+              "cost": 4,
+              "purpleTechnique": true,
+              "chargeId": "purple-storm"
+            }
+          ]
+        }
+      ]
     }
   ],
   "races": [
@@ -10299,6 +12035,138 @@
           "Память прошлой жизни"
         ]
       }
+    },
+    {
+      "id": "half-orc",
+      "label": "Полуорк",
+      "size": "medium",
+      "info": {
+        "tagline": "SRD 5.1 · совместимо с происхождением 2024",
+        "tags": [
+          "Тёмное зрение",
+          "Неукротимая стойкость"
+        ]
+      },
+      "grants": [
+        {
+          "type": "size",
+          "value": "medium"
+        },
+        {
+          "type": "speed",
+          "value": 30
+        },
+        {
+          "type": "skill-fixed",
+          "skills": [
+            "intimidation"
+          ]
+        },
+        {
+          "type": "language-fixed",
+          "languages": [
+            "Орочий"
+          ]
+        },
+        {
+          "type": "trait",
+          "id": "half-orc-compatibility",
+          "name": "Происхождение полуорка",
+          "description": "Используются особенности полуорка SRD 5.1. Для совместимости с правилами 2024 расовые +2 Силы и +1 Телосложения не добавляются: увеличения характеристик выбираются в предыстории."
+        },
+        {
+          "type": "trait",
+          "id": "half-orc-darkvision",
+          "name": "Тёмное зрение",
+          "description": "В пределах 60 футов видите при тусклом свете как при ярком, а в темноте — как при тусклом. В темноте различаете оттенки серого, а не цвета."
+        },
+        {
+          "type": "trait",
+          "id": "half-orc-menacing",
+          "name": "Угрожающий вид",
+          "description": "Получаете владение Запугиванием; бонус уже учтён в таблице навыков."
+        },
+        {
+          "type": "resource",
+          "id": "half-orc-endurance",
+          "name": "Неукротимая стойкость",
+          "max": 1,
+          "isLongRest": true
+        },
+        {
+          "type": "trait",
+          "id": "half-orc-endurance",
+          "name": "Неукротимая стойкость",
+          "description": "Когда ваши хиты должны упасть до 0, но вы не погибаете мгновенно, можете остаться с 1 хитом. Одно применение до долгого отдыха. Решение и изменение хитов выполняются вручную; отметьте расход в ресурсах."
+        },
+        {
+          "type": "trait",
+          "id": "half-orc-savage-attacks",
+          "name": "Свирепые атаки",
+          "description": "При критическом попадании ближней атакой оружием бросьте ещё одну кость урона оружия сверх обычных костей критического попадания. Добавьте результат к урону. Не действует на безоружные удары, дополнительные кости заклинаний и обычные попадания; дополнительную кость бросайте вручную."
+        }
+      ]
+    },
+    {
+      "id": "half-elf",
+      "label": "Полуэльф",
+      "size": "medium",
+      "info": {
+        "tagline": "Полуэльф 2014 · наследия SCAG · происхождение 2024"
+      },
+      "grants": [
+        {
+          "type": "size",
+          "value": "medium"
+        },
+        {
+          "type": "speed",
+          "value": 30
+        },
+        {
+          "type": "language-fixed",
+          "languages": [
+            "Эльфийский"
+          ]
+        },
+        {
+          "type": "language-choice",
+          "id": "half-elf-language",
+          "label": "Дополнительный язык полуэльфа",
+          "count": 1
+        },
+        {
+          "type": "skill-choice",
+          "id": "half-elf-versatility",
+          "label": "Универсальность навыков",
+          "count": 2,
+          "options": "any",
+          "excludeSubraces": [
+            "half-elf-high",
+            "half-elf-wood",
+            "half-elf-drow",
+            "half-elf-aquatic"
+          ]
+        },
+        {
+          "type": "trait",
+          "id": "half-elf-origin",
+          "name": "Происхождение полуэльфа",
+          "description": "Особенности полуэльфа 2014, совместимые с предысториями 2024. Без выбранного наследия получаете два любых навыка. Наследие из SCAG заменяет эти два навыка своей особенностью. Старые расовые бонусы характеристик не добавляются поверх бонусов предыстории. Полуэльф не получает Транс и дополнительные заклинания полного эльфа 2024."
+        },
+        {
+          "type": "trait",
+          "id": "half-elf-darkvision",
+          "name": "Тёмное зрение",
+          "description": "В пределах 60 футов видите при тусклом свете как при ярком, а в темноте — как при тусклом. Цвета в темноте не различаются."
+        },
+        {
+          "type": "trait",
+          "id": "half-elf-fey",
+          "name": "Наследие фей",
+          "description": "Спасброски против очарования совершаете с преимуществом. Магия не может усыпить вас. Это не освобождает от обычного сна."
+        }
+      ]
     }
   ],
   "subraces": [
@@ -10614,6 +12482,177 @@
           "Тьма"
         ]
       }
+    },
+    {
+      "id": "half-elf-high",
+      "raceId": "half-elf",
+      "label": "Высший полуэльф",
+      "grants": [
+        {
+          "type": "trait",
+          "id": "half-elf-high-heritage",
+          "name": "Наследие высшего эльфа",
+          "description": "Вместо двух навыков выберите либо один заговор волшебника, использующий Интеллект, либо владение эльфийским оружием. Заговор доступен с 1-го уровня и не занимает лимит заговоров класса. Можно выбрать Шоковое прикосновение."
+        },
+        {
+          "type": "pick-one",
+          "id": "high-half-elf-heritage",
+          "label": "Особенность высшего наследия",
+          "options": [
+            {
+              "id": "cantrip",
+              "label": "Один заговор волшебника (Интеллект)",
+              "grants": [
+                {
+                  "type": "spell-choice",
+                  "id": "high-half-elf-cantrip",
+                  "label": "Заговор высшего полуэльфа · Интеллект",
+                  "count": 1,
+                  "circle": 0,
+                  "spellList": "wizard",
+                  "ability": "int"
+                }
+              ]
+            },
+            {
+              "id": "weapons",
+              "label": "Владение эльфийским оружием",
+              "grants": [
+                {
+                  "type": "weapon-prof",
+                  "specific": [
+                    "Длинный меч",
+                    "Короткий меч",
+                    "Короткий лук",
+                    "Длинный лук"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "half-elf-wood",
+      "raceId": "half-elf",
+      "label": "Лесной полуэльф",
+      "grants": [
+        {
+          "type": "trait",
+          "id": "half-elf-wood-heritage",
+          "name": "Наследие лесного эльфа",
+          "description": "Вместо двух навыков выберите одну особенность лесного наследия: скорость 35 футов, Маскировка в дикой природе или владение эльфийским оружием."
+        },
+        {
+          "type": "pick-one",
+          "id": "wood-half-elf-heritage",
+          "label": "Особенность лесного наследия",
+          "options": [
+            {
+              "id": "fleet",
+              "label": "Быстрые ноги · скорость 35 футов",
+              "grants": [
+                {
+                  "type": "speed",
+                  "value": 35
+                }
+              ]
+            },
+            {
+              "id": "mask",
+              "label": "Маскировка в дикой природе",
+              "grants": [
+                {
+                  "type": "trait",
+                  "id": "half-elf-wood-mask",
+                  "name": "Маскировка в дикой природе",
+                  "description": "Можете попытаться спрятаться, даже если вы лишь слабо заслонены листвой, сильным дождём, снегопадом, туманом или другими природными явлениями. Это не автоматическая невидимость: применяются обычные проверки Скрытности."
+                }
+              ]
+            },
+            {
+              "id": "weapons",
+              "label": "Владение эльфийским оружием",
+              "grants": [
+                {
+                  "type": "weapon-prof",
+                  "specific": [
+                    "Длинный меч",
+                    "Короткий меч",
+                    "Короткий лук",
+                    "Длинный лук"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "half-elf-drow",
+      "raceId": "half-elf",
+      "label": "Полуэльф-дроу",
+      "grants": [
+        {
+          "type": "trait",
+          "id": "half-elf-drow-magic",
+          "name": "Магия дроу",
+          "description": "Вместо двух навыков получаете Пляшущие огоньки. С 3-го уровня можете один раз до долгого отдыха сотворить Огонь фей, с 5-го — Тьму также один раз. Магическая характеристика — Харизма. Это магия наследия 2014: тёмное зрение остаётся 60 футов; Чувствительность к солнцу не добавляется."
+        },
+        {
+          "type": "spell-fixed",
+          "slug": "dancing-lights",
+          "ability": "cha",
+          "slotCast": false
+        }
+      ],
+      "leveledGrants": [
+        {
+          "level": 3,
+          "grants": [
+            {
+              "type": "spell-fixed",
+              "slug": "faerie-fire",
+              "ability": "cha",
+              "uses": 1,
+              "rest": "long",
+              "slotCast": false
+            }
+          ]
+        },
+        {
+          "level": 5,
+          "grants": [
+            {
+              "type": "spell-fixed",
+              "slug": "darkness",
+              "ability": "cha",
+              "uses": 1,
+              "rest": "long",
+              "slotCast": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "half-elf-aquatic",
+      "raceId": "half-elf",
+      "label": "Водный полуэльф",
+      "grants": [
+        {
+          "type": "swim-speed",
+          "value": 30
+        },
+        {
+          "type": "trait",
+          "id": "half-elf-aquatic-swim",
+          "name": "Водное наследие",
+          "description": "Вместо двух навыков получаете скорость плавания 30 футов. Это не даёт способности дышать под водой."
+        }
+      ]
     }
   ],
   "backgrounds": [
@@ -11091,6 +13130,94 @@
           ]
         }
       ]
+    },
+    {
+      "id": "noble",
+      "label": "Благородный (аристократ)",
+      "info": {
+        "tagline": "История, Убеждение и черта Одарённый · 2024"
+      },
+      "grants": [
+        {
+          "type": "asi-pool",
+          "id": "noble-abilities",
+          "total": 3,
+          "max": 2,
+          "options": [
+            "str",
+            "int",
+            "cha"
+          ]
+        },
+        {
+          "type": "skill-fixed",
+          "skills": [
+            "history",
+            "persuasion"
+          ]
+        },
+        {
+          "type": "tool-choice",
+          "id": "noble-gaming",
+          "label": "Игровой набор",
+          "count": 1,
+          "options": [
+            "Игральные кости",
+            "Драконьи шахматы",
+            "Игральные карты",
+            "Ставка трёх драконов"
+          ]
+        },
+        {
+          "type": "feat",
+          "featId": "skilled",
+          "category": "origin"
+        },
+        {
+          "type": "trait",
+          "id": "noble-origin",
+          "name": "Аристократическое происхождение",
+          "description": "Вы выросли среди знати или получили положение благодаря семье и воспитанию. Предыстория 2024: распределите +2 и +1 либо три +1 между Силой, Интеллектом и Харизмой. Получаете Историю, Убеждение, владение одним игровым набором и черту Одарённый. Дворянство — часть истории; оно не даёт автоматического успеха социальных проверок."
+        },
+        {
+          "type": "pick-one",
+          "id": "noble-equipment",
+          "label": "Снаряжение благородного",
+          "options": [
+            {
+              "id": "kit",
+              "label": "Игровой набор, щегольская одежда, духи и 29 зм",
+              "grants": [
+                {
+                  "type": "equipment-fixed",
+                  "items": [
+                    "Щегольская одежда",
+                    "Духи"
+                  ]
+                },
+                {
+                  "type": "gold",
+                  "amount": 29
+                },
+                {
+                  "type": "equipment-selected-tool",
+                  "choiceId": "noble-gaming"
+                }
+              ]
+            },
+            {
+              "id": "gold",
+              "label": "50 золотых монет",
+              "grants": [
+                {
+                  "type": "gold",
+                  "amount": 50
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "feats": [
@@ -11140,7 +13267,46 @@
         {
           "type": "skill-choice",
           "count": 3,
-          "options": "any"
+          "options": "any",
+          "allowTools": true,
+          "tools": [
+            "Инструменты алхимика",
+            "Инструменты гончара",
+            "Инструменты каллиграфа",
+            "Инструменты каменщика",
+            "Инструменты картографа",
+            "Инструменты кожевника",
+            "Инструменты кузнеца",
+            "Инструменты пивовара",
+            "Инструменты плотника",
+            "Инструменты повара",
+            "Инструменты резчика по дереву",
+            "Инструменты ремонтника",
+            "Инструменты сапожника",
+            "Инструменты стеклодува",
+            "Инструменты ткача",
+            "Инструменты художника",
+            "Инструменты ювелира",
+            "Барабан",
+            "Волынка",
+            "Лира",
+            "Лютня",
+            "Рожок",
+            "Свирель",
+            "Скрипка",
+            "Флейта",
+            "Цимбалы",
+            "Шалмей",
+            "Инструменты вора",
+            "Набор травника",
+            "Набор для грима",
+            "Набор для подделки документов",
+            "Набор отравителя",
+            "Игральные кости",
+            "Драконьи шахматы",
+            "Игральные карты",
+            "Ставка трёх драконов"
+          ]
         }
       ]
     },
