@@ -1,16 +1,16 @@
-import {viewKey,rememberView,resolveView,prepareCollapsibleBlocks} from './view-memory.js?v=20261018-4';
-import {icon,actionLabel} from './icons.js?v=20261018-4';
-import {createCharacterReader} from './character-reader.js?v=20261018-4';
-import {initTheme,setTheme} from './theme.js?v=20261018-4';
-import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,spendTechnique,monkWeaponProfile,spellCastingStats,setBackgroundAsiMode,featReason,validateSave,sources} from './engine.js?v=20261018-4';
-import {spellNames} from './spell-names.js?v=20261018-4';
-import {cloud} from './cloud.js?v=20261018-4';
-import {createRooms} from './rooms.js?v=20261018-4';
-import {masterSummary} from './master-summary.js?v=20261018-4';
-import {createCombat} from './combat.js?v=20261018-4';
-import {createMerchants} from './merchants.js?v=20261018-4';
-import {activeAbilities,activeResourcePool,activeCostLabel,useActiveAbility} from './active-abilities.js?v=20261018-4';
-import {WEAPON_MASTERY,MASTERY_RULES,masteryLimit,eligibleMasteryWeapons,learnedMasteries,weaponActivities} from './weapon-activities.js?v=20261018-4';
+import {viewKey,rememberView,resolveView,prepareCollapsibleBlocks} from './view-memory.js?v=20261018-5';
+import {icon,actionLabel} from './icons.js?v=20261018-5';
+import {createCharacterReader} from './character-reader.js?v=20261018-5';
+import {initTheme,setTheme} from './theme.js?v=20261018-5';
+import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,spendTechnique,monkWeaponProfile,spellCastingStats,setBackgroundAsiMode,featReason,validateSave,sources} from './engine.js?v=20261018-5';
+import {spellNames} from './spell-names.js?v=20261018-5';
+import {cloud} from './cloud.js?v=20261018-5';
+import {createRooms} from './rooms.js?v=20261018-5';
+import {masterSummary} from './master-summary.js?v=20261018-5';
+import {createCombat} from './combat.js?v=20261018-5';
+import {createMerchants} from './merchants.js?v=20261018-5';
+import {activeAbilities,activeResourcePool,activeCostLabel,useActiveAbility} from './active-abilities.js?v=20261018-5';
+import {WEAPON_MASTERY,MASTERY_RULES,masteryLimit,eligibleMasteryWeapons,learnedMasteries,weaponActivities} from './weapon-activities.js?v=20261018-5';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function safeRich(value){const source=String(value??''),hasMarkup=/<\/?(?:b|strong|i|em|u|s|strike|ul|ol|li|p|div|br|h3|blockquote)\b/i.test(source),template=document.createElement('template');template.innerHTML=hasMarkup?source:esc(source).replace(/\n/g,'<br>');const allowed=new Set(['B','STRONG','I','EM','U','S','STRIKE','UL','OL','LI','P','DIV','BR','H3','BLOCKQUOTE']);for(const node of [...template.content.querySelectorAll('*')]){if(!allowed.has(node.tagName))node.replaceWith(...node.childNodes);else for(const attr of [...node.attributes])node.removeAttribute(attr.name);}return template.innerHTML;}
 const ICONS=Object.fromEntries(Object.entries({combat:'swords',merchants:'shop',party:'hero',sheet:'scroll',growth:'sparkles',spells:'book',inventory:'bag',story:'scroll',notes:'notes',library:'book',rules:'info'}).map(([key,name])=>[key,icon(name)]));
@@ -298,7 +298,7 @@ document.addEventListener('click',async e=>{
   if(a==='hit-die'){if((c.spent['hit-dice']||0)>=c.level)return toast('Кости хитов закончились');const total=roll('1d'+s.die+signed(s.mods.con),'Кость хитов');mutate(()=>{c.spent['hit-dice']=(c.spent['hit-dice']||0)+1;c.damage=Math.max(0,c.damage-Math.max(0,total));});el.disabled=(c.spent['hit-dice']||0)>=c.level;return;}
   if(a==='confirm-rest'){const long=el.dataset.long==='true';mutate(()=>{const next=rest(c,s,long);for(const r of c.customResources||[])if(long&&r.isLongRest||!long&&r.isShortRest)next.spent[r.id]=0;state.characters[state.characters.indexOf(c)]=next;});$('#dialog').close();toast('Отдых завершён');return;}
   if(a==='active-masteries')return weaponMasteryDialog(c,s);
-  if(a==='active-use'){const ability=activeAbilities(c,s).find(x=>x.id===el.dataset.id),variant=ability?.variants.find(x=>x.id===el.dataset.variant);if(!variant)return;if(variant.recovery)return activeRecoveryDialog(c,s,ability,variant);try{const result=useActiveAbility(c,s,ability.id,variant.id);mutate(()=>state.characters[state.characters.indexOf(c)]=result.character);if(ability.formulas?.length===1&&ability.id!=='tactical-mind'){const total=roll(ability.formulas[0],ability.name);toast(result.message+' · Бросок: '+total);}else toast(result.message);}catch(error){toast(error.message);}return;}
+  if(a==='active-use'){const ability=activeAbilities(c,s).find(x=>x.id===el.dataset.id),variant=ability?.variants.find(x=>x.id===el.dataset.variant);if(!variant)return;if(variant.recovery)return activeRecoveryDialog(c,s,ability,variant);try{const result=useActiveAbility(c,s,ability.id,variant.id);if(variant.roll)return roll(variant.roll,ability.name+(variant.id==='damage'?': урон':': атака'));mutate(()=>state.characters[state.characters.indexOf(c)]=result.character);if(ability.formulas?.length===1&&ability.id!=='tactical-mind'){const total=roll(ability.formulas[0],ability.name);toast(result.message+' · Бросок: '+total);}else toast(result.message);}catch(error){toast(error.message);}return;}
   if(a==='technique'){try{const next=spendTechnique(c,s,el.dataset.id);mutate(()=>state.characters[state.characters.indexOf(c)]=next);toast('Ресурс потрачен. Примените эффект техники по описанию.');}catch(e){toast(e.message);}return;}
   if(a==='resource'){const r=[...s.resources,...(c.customResources||[])].find(x=>x.id===el.dataset.id);if(r)mutate(()=>{const start=c.spent[r.id]??(r.id==='elation-ardor'?r.max:0);if(r.id==='elation-ardor'&&Number(el.dataset.delta)<0){if((c.ardorGained||0)>=s.prof){toast('Достигнут предел Пыла за ход. Отметьте начало нового хода.');return;}c.ardorGained=(c.ardorGained||0)+1;}c.spent[r.id]=clamp(start+Number(el.dataset.delta),0,r.max);});return;}
   if(a==='resource-edit'){const r=(c.customResources||[]).find(x=>x.id===el.dataset.id);if(!r)return;simpleForm('Изменить ресурс','resource-form',`<input type="hidden" name="id" value="${esc(r.id)}">${field('Название','name',r.name,'text','required')}${field('Максимум','max',r.max,'number','min="1" max="100" required')}<label>Восстановление<select name="rest">${opt('long','Долгий отдых',r.isShortRest?'short':r.isLongRest?'long':'manual')}${opt('short','Короткий и долгий отдых',r.isShortRest?'short':'')}${opt('manual','Вручную',r.isLongRest?'':'manual')}</select></label>`,btn('Удалить','resource-remove','subtle danger',`data-id="${esc(r.id)}"`));return;}
@@ -392,7 +392,7 @@ $('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog'
 $('#dialog').addEventListener('close',()=>render());
 window.addEventListener('storage',e=>{if(e.key===storageKey()){toast('Листы изменены в другой вкладке. Обновите страницу перед редактированием.');}});
 try{
-  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261018-4').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261018-4').then(r=>r.json())]);
+  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261018-5').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261018-5').then(r=>r.json())]);
   const stored=localStorage.getItem(STORE);state=stored?JSON.parse(stored):{characters:partyTemplates(),journal:''};
   if(!Array.isArray(state.characters))throw Error('Повреждено сохранение. Скачайте данные браузера перед сбросом.');
   dataset=normalizeDataset(state.dataset||rawDataset);selected=state.characters[0]?.id;

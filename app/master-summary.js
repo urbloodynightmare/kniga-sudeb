@@ -1,4 +1,4 @@
-import {derive,STATS,SKILLS,signed,spellCastingStats} from './engine.js?v=20261018-4';
+import {derive,STATS,SKILLS,signed,spellCastingStats} from './engine.js?v=20261018-5';
 
 // Only these public game values are shared with a room's master.
 export function masterSummary(c,dataset){

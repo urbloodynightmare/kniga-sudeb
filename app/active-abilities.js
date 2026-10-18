@@ -3,6 +3,7 @@ const cost=(resourceId,amount=1)=>({resourceId,amount});
 const variant=(id,label,costs=[],extra={})=>({id,label,costs,...extra});
 const paid=(id,action='По описанию',effect)=>({action,variants:[variant('use','Применить',[cost(id)],{effect})]});
 const RULES={
+ 'purple-pull':{action:'При попадании / вместо одной атаки',variants:[variant('hit','Притянуть после попадания',[cost('monk-focus')]),variant('held','Притянуть захваченную цель',[cost('monk-focus')])]},
  'inv-pact-blade-trait':{action:'Бонусное действие',variants:[variant('use','Создать или связать оружие')]},
  'inv-pact-chain-trait':{action:'Действие Магия',variants:[variant('use','Призвать фамильяра')]},
  'inv-one-with-shadows-trait':{action:'Действие Магия · тусклый свет или темнота',variants:[variant('use','Невидимость')]},
@@ -28,7 +29,7 @@ const RULES={
  'half-orc-endurance':paid('half-orc-endurance','Когда хиты падают до 0','endurance'),
  'luck-points-2024':paid('luck-points-2024','Перед испытанием к20'),
  'mage-slayer-guard':paid('mage-slayer-guard','После провала спасброска'),
- 'monk-martial-arts':{action:'Бонусное действие',variants:[variant('use','Безоружный удар')],note:'Бросок атаки и урона есть в блоке «Атаки» ниже.'},
+ 'monk-martial-arts':{action:'Бонусное действие',dynamic:'martial',displayName:'Безоружный удар бонусным действием',note:'Один безоружный удар без расхода концентрации. Не требуется сначала совершать действие Атака. Можно бить рукой, ногой, коленом или локтем: свободная вторая рука не обязательна. Модификатор характеристики добавляется к урону. Шквал ударов — другой вариант того же бонусного действия: 2 удара за 1 очко концентрации (3 удара с 10-го уровня), а не дополнение к этому удару.'},
  'monk-flurry':{action:'Бонусное действие',variants:[variant('use','Шквал ударов',[cost('monk-focus')])]},
  'monk-patient-defense':{action:'Бонусное действие',variants:[variant('free','Отход'),variant('focus','Отход и Уклонение',[cost('monk-focus')],{effect:'patient-defense'})]},
  'monk-step-wind':{action:'Бонусное действие',variants:[variant('free','Рывок'),variant('focus','Рывок и Отход',[cost('monk-focus')])]},
@@ -65,6 +66,7 @@ export function activeAbilities(c,s){
   if(!rule&&(t.active===true||/(?:бонусн[а-яё]* действ|реакцией|(?:^|\n|\.\s+)действием|один раз (?:за|в) (?:каждый )?(?:ваш )?ход|вы можете накладывать)/i.test(t.description)))rule={action:t.activationType||'По описанию',variants:[variant('use','Применить')]};
   if(!rule)continue;
   rule={...rule,variants:(rule.variants||[]).map(v=>({...v,costs:[...v.costs]})),formulas:[...(rule.formulas||[])]};
+  if(rule.dynamic==='martial'){const attack=s.classAttacks.find(a=>a.id==='monk-unarmed');if(attack){const modifier=s.mods[attack.ability];rule.variants=[variant('attack','Атака '+signed(modifier+s.prof),[],{roll:'1d20'+signed(modifier+s.prof)}),variant('damage','Урон '+attack.die+signed(modifier),[],{roll:attack.die+signed(modifier)})];}}
   if(rule.dynamic==='sneak'){rule.formulas=[`${Math.ceil(c.level/2)}d6`];rule.variants=[variant('use','Применить')];}
   if(rule.dynamic==='cunning'||rule.dynamic==='devious'){
    const choices=rule.dynamic==='cunning'?[['poison','Отравление',1],['trip','Подсечка',1],['withdraw','Отступление',1]]:[['daze','Шок',2],['knockout','Нокаут',6],['blind','Ослепление',3]];
@@ -84,7 +86,7 @@ export function activeAbilities(c,s){
   if(t.id==='jackpot')rule.formulas=[c.level>=10?'3d6':'2d6'];
   if(!rule.variants.length)rule.variants=[variant('use','Применить')];
   if(t.active===true&&t.resourceId)rule.variants=[variant('use','Применить',[cost(t.resourceId,Number(t.cost)||1)])];
-  const ability={...t,...rule,name:clean(t.name),id:t.id||t.key};
+  const ability={...t,...rule,name:clean(rule.displayName||t.name),id:t.id||t.key};
   ability.variants=ability.variants.map(v=>({...v,disabledReason:activeUseReason(c,s,ability,v,pool)}));
   abilities.push(ability);
  }
@@ -97,6 +99,7 @@ function activeUseReason(c,s,a,v,pool=activeResourcePool(c,s)){
  if(v.effect==='restore-first-slot'&&!s.slots.some(x=>x.level===1&&(c.spent[x.id]||0)>0))return 'Нет потраченной ячейки 1-го круга';
  if(v.effect==='restore-specific-slot'&&!s.slots.some(x=>x.level===v.restoreLevel&&(c.spent[x.id]||0)>0))return 'Нет потраченной ячейки этого круга';
  if(v.effect==='restore-all-in'&&pool.find(r=>r.id==='moment-of-aha-all-in')?.remaining>0)return 'Применение уже доступно';
+ if(a.id==='monk-martial-arts'&&!s.martialArtsActive)return 'Боевые искусства недоступны в доспехе или со щитом';
  if(a.id==='jackpot'&&c.jackpotUsed)return 'Джекпот уже использован в этом раунде';
  if(a.id==='half-orc-endurance'&&s.hp!==0)return 'Применяется, когда хиты падают до 0';
  return '';
