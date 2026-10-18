@@ -19,3 +19,4 @@ test('network errors can be retried without dropping pending data',async()=>{
 test('switching accounts resets pending data and revision',async()=>{
   const q=new SaveQueue(async(_,rev)=>rev+1);q.enqueue({note:'private'});q.reset(9);assert.equal(q.pending,null);assert.equal(q.revision,9);assert.equal(q.blocked,false);
 });
+test('save queue retains the server error until a successful retry',async()=>{const error=Object.assign(Error('INVALID_BOOK'),{code:'P0001'});let fails=true;const q=new SaveQueue(async()=>{if(fails)throw error;return 1;});q.enqueue({characters:[]});await q.flush();assert.equal(q.error,error);assert.ok(q.pending);fails=false;await q.retry();assert.equal(q.error,null);assert.equal(q.pending,null);q.reset();assert.equal(q.error,null);clearTimeout(q.timer);});

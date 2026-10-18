@@ -1,13 +1,14 @@
+import {prepareBookPayload} from './book-payload.js?v=20261018-6';
 import {createClient} from '@supabase/supabase-js';
 import {cloudConfig} from './cloud-config.js';
 
 export class SaveQueue {
-  constructor(write,onStatus=()=>{}){this.write=write;this.onStatus=onStatus;this.revision=0;this.pending=null;this.running=false;this.blocked=false;this.timer=null;this.retryAttempt=0;this.done=Promise.resolve();}
-  reset(revision=0){clearTimeout(this.timer);this.revision=revision;this.pending=null;this.blocked=false;this.retryAttempt=0;}
+  constructor(write,onStatus=()=>{}){this.write=write;this.onStatus=onStatus;this.revision=0;this.pending=null;this.running=false;this.blocked=false;this.timer=null;this.retryAttempt=0;this.error=null;this.done=Promise.resolve();}
+  reset(revision=0){clearTimeout(this.timer);this.revision=revision;this.pending=null;this.blocked=false;this.retryAttempt=0;this.error=null;}
   enqueue(data){this.pending=structuredClone(data);if(!this.blocked)this.onStatus('pending');clearTimeout(this.timer);this.timer=setTimeout(()=>this.flush(),650);}
   async flush(){clearTimeout(this.timer);if(this.running){await this.done;if(this.pending&&!this.blocked)return this.flush();return;}if(this.blocked||!this.pending)return;
     this.running=true;
-    this.done=(async()=>{while(this.pending&&!this.blocked){const data=this.pending;this.pending=null;this.onStatus('saving');try{this.revision=await this.write(data,this.revision);this.retryAttempt=0;this.onStatus(this.pending?'pending':'saved');}catch(error){if(!this.pending)this.pending=data;const conflict=error.message?.includes('REVISION_CONFLICT');this.blocked=conflict;this.onStatus(conflict?'conflict':'error',error);if(!conflict){const delay=Math.min(30000,1500*2**this.retryAttempt++);this.timer=setTimeout(()=>this.flush(),delay);}break;}}})();
+    this.done=(async()=>{while(this.pending&&!this.blocked){const data=this.pending;this.pending=null;this.onStatus('saving');try{this.revision=await this.write(data,this.revision);this.retryAttempt=0;this.error=null;this.onStatus(this.pending?'pending':'saved');}catch(error){this.error=error;if(!this.pending)this.pending=data;const conflict=error.message?.includes('REVISION_CONFLICT');this.blocked=conflict;this.onStatus(conflict?'conflict':'error',error);if(!conflict){const delay=Math.min(30000,1500*2**this.retryAttempt++);this.timer=setTimeout(()=>this.flush(),delay);}break;}}})();
     try{await this.done;}finally{this.running=false;}
   }
   async retry(){clearTimeout(this.timer);this.blocked=false;this.retryAttempt=0;return this.flush();}
@@ -28,7 +29,7 @@ export const cloud={configured:!!(cloudConfig.url&&cloudConfig.publishableKey),u
     });
     this.queue=new SaveQueue(async(payload,expected)=>{
       if(!this.user)throw Error('Войдите в аккаунт');
-      const {data,error}=await this.client.rpc('save_player_book',{payload,expected_revision:expected});
+      const {data,error}=await this.client.rpc('save_player_book',{payload:await prepareBookPayload(payload),expected_revision:expected});
       if(error)throw error;return Number(data);
     },(status,error)=>{this.status=status;this.onChange('status',error);});
   },

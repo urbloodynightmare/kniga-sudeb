@@ -1,5 +1,5 @@
-import {icon,actionLabel} from './icons.js?v=20261018-5';
-import {mergeLoot,validateLootItem,rollD10,rollPercentile} from './loot-engine.js?v=20261018-5';
+import {icon,actionLabel} from './icons.js?v=20261018-6';
+import {mergeLoot,validateLootItem,rollD10,rollPercentile} from './loot-engine.js?v=20261018-6';
 export function createRoomLoot({cloud,rooms,esc,showDialog,toast,onChange}){
  let overrides=[],error='',loading=false,loaded='',request=0,query='',range=0,expanded=false,last=null,d10=null;
  const ctx=()=>rooms.context(),master=()=>!!cloud.user&&ctx().room?.master_id===cloud.user.id;
