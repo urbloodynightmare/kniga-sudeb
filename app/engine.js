@@ -1,4 +1,5 @@
-import {addBuiltInCharacters} from './character-additions.js?v=20261018-2';
+import {addBuiltInCharacters} from './character-additions.js?v=20261018-3';
+import {addActiveAbilityResources} from './active-abilities.js?v=20261018-3';
 export const STATS = {str:'Сила',dex:'Ловкость',con:'Телосложение',int:'Интеллект',wis:'Мудрость',cha:'Харизма'};
 export const SKILLS = {acrobatics:['Акробатика','dex'],'animal handling':['Уход за животными','wis'],arcana:['Магия','int'],athletics:['Атлетика','str'],deception:['Обман','cha'],history:['История','int'],insight:['Проницательность','wis'],intimidation:['Запугивание','cha'],investigation:['Расследование','int'],medicine:['Медицина','wis'],nature:['Природа','int'],perception:['Внимательность','wis'],performance:['Выступление','cha'],persuasion:['Убеждение','cha'],religion:['Религия','int'],'sleight of hand':['Ловкость рук','dex'],stealth:['Скрытность','dex'],survival:['Выживание','wis']};
 export const mod = n=>Math.floor((n-10)/2);
@@ -25,6 +26,7 @@ export function normalizeDataset(raw){
     const ids=new Set();for(const entry of d[key]){if(typeof entry.id!=='string'||ids.has(entry.id))throw Error('Повторяющийся или неверный id: '+entry.id);ids.add(entry.id);}
   }
   addBuiltInCharacters(d);
+  addActiveAbilityResources(d);
   // Corrections for the supplied 2024 party pack; keep the source file untouched.
   if(d.id==='aventurine-party-complete-2024'){
     for(const id of ['inv-agonizing-blast','inv-repelling-blast','inv-devils-sight','inv-mask-many-faces','inv-misty-visions','inv-otherworldly-leap','inv-fiendish-vigor','inv-lessons-first-ones']){
@@ -101,7 +103,7 @@ export function derive(c,d,validationPass=0){
         case 'class-attack':classAttacks.push({...g,...meta});break;
         case 'saving-throw':g.stats.forEach(x=>s.saves.add(x));break;
         case 'armor-prof':g.armors.forEach(x=>s.armorProf.add(x));break;
-        case 'weapon-prof':(g.specific||g.weapons||[]).forEach(x=>s.weaponProf.add(x));break;
+        case 'weapon-prof':[...(g.weapons||[]),...(g.specific||[])].forEach(x=>s.weaponProf.add(x));break;
         case 'tool-fixed':g.tools.forEach(x=>s.tools.add(x));break;
         case 'language-fixed':g.languages.forEach(x=>s.languages.add(x));break;
         case 'skill-fixed':g.skills.forEach(x=>s.skills.add(x));break;
@@ -281,8 +283,9 @@ export function rest(c,s,long){
     else if(!long&&r.isShortRest)next.spent[r.id]=r.shortRestRegain?Math.max(0,(next.spent[r.id]||0)-Number(r.shortRestRegain)):0;
   }
   if(long||s.casting?.progression==='pact')s.slots.forEach(slot=>next.spent[slot.id]=0);
+  for(const spell of s.fixedSpells)if(!spell.itemId&&Number(spell.uses)>0&&(long||spell.rest==='short'))next.spent['free-spell:'+spell.key+':'+spell.slug]=0;
   for(const item of [...s.equipment,...(next.inventory||[])].map(entry=>({...entry,...(next.itemOverrides?.[entry.id]||{})}))){const legacy=!Array.isArray(item.imbuedSpells),magicList=legacy?(item.imbuedSpell?.id?[item.imbuedSpell]:[]):item.imbuedSpells;for(const magic of magicList)if(magic?.id&&(long||magic.rest==='short'))next.spent['item-spell:'+item.id+(legacy?'':':'+magic.id)]=0;}
-  if(long){next.damage=0;next.tempHp=0;next.spent['hit-dice']=0;for(const k of Object.keys(next.spent))if(k.startsWith('free-spell:'))next.spent[k]=0;if(next.raceId==='human')next.inspiration=true;}
+  if(long){next.damage=0;next.tempHp=0;next.spent['hit-dice']=0;for(const k of Object.keys(next.spent))if(k.startsWith('free-spell:')||k.startsWith('active-counter:'))next.spent[k]=0;if(next.raceId==='human')next.inspiration=true;}
   return next;
 }
 export function validateSave(data,d){
