@@ -1,4 +1,4 @@
-import {derive,featReason} from './engine.js?v=20261027-1';
+import {derive,featReason} from './engine.js?v=20261027-2';
 function choiceContext(character,dataset,key){
  const hero=structuredClone(character);delete hero.choices[key];
  const state=derive(hero,dataset),choice=state.choices.find(q=>q.key===key&&q.type==='pick-one');

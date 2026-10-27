@@ -1,5 +1,6 @@
-import {addBuiltInCharacters} from './character-additions.js?v=20261027-1';
-import {addActiveAbilityResources} from './active-abilities.js?v=20261027-1';
+import {restSummons} from './summons.js?v=20261027-2';
+import {addBuiltInCharacters} from './character-additions.js?v=20261027-2';
+import {addActiveAbilityResources} from './active-abilities.js?v=20261027-2';
 export const STATS = {str:'Сила',dex:'Ловкость',con:'Телосложение',int:'Интеллект',wis:'Мудрость',cha:'Харизма'};
 export const SKILLS = {acrobatics:['Акробатика','dex'],'animal handling':['Уход за животными','wis'],arcana:['Магия','int'],athletics:['Атлетика','str'],deception:['Обман','cha'],history:['История','int'],insight:['Проницательность','wis'],intimidation:['Запугивание','cha'],investigation:['Расследование','int'],medicine:['Медицина','wis'],nature:['Природа','int'],perception:['Внимательность','wis'],performance:['Выступление','cha'],persuasion:['Убеждение','cha'],religion:['Религия','int'],'sleight of hand':['Ловкость рук','dex'],stealth:['Скрытность','dex'],survival:['Выживание','wis']};
 export const mod = n=>Math.floor((n-10)/2);
@@ -59,7 +60,7 @@ export function normalizeDataset(raw){
   return d;
 }
 export function createCharacter(template={}) {
-  return {id:crypto.randomUUID(),name:'Новый герой',level:1,classId:'warlock',raceId:'human',subraceId:'',subclassId:'',backgroundId:'',stats:{str:8,dex:14,con:13,int:10,wis:12,cha:15},choices:{},manualFeatures:[],spells:[],inventory:[],itemOverrides:{},spent:{},customLanguages:[],damage:0,tempHp:0,goldDelta:0,notes:'',appearance:'',backstory:'',allies:'',personality:'',ideals:'',bonds:'',flaws:'',goals:'',avatar:'',armor:'none',shield:false,mageArmor:false,acBonus:0,hpBonus:0,maneuverAbility:'',maneuverDCBonus:0,inspiration:false,conditions:[],draft:true,...template};
+  return {id:crypto.randomUUID(),name:'Новый герой',level:1,classId:'warlock',raceId:'human',subraceId:'',subclassId:'',backgroundId:'',stats:{str:8,dex:14,con:13,int:10,wis:12,cha:15},choices:{},manualFeatures:[],spells:[],inventory:[],summons:[],itemOverrides:{},spent:{},customLanguages:[],damage:0,tempHp:0,goldDelta:0,notes:'',appearance:'',backstory:'',allies:'',personality:'',ideals:'',bonds:'',flaws:'',goals:'',avatar:'',armor:'none',shield:false,mageArmor:false,acBonus:0,hpBonus:0,maneuverAbility:'',maneuverDCBonus:0,inspiration:false,conditions:[],draft:true,...template};
 }
 export function partyTemplates(){return [
   createCharacter({name:'Авантюрин',level:4,classId:'warlock',raceId:'human',subclassId:'aha-patron',backgroundId:'professional-gambler',notes:'Покровитель — Аха. Магические фишки, карты и удача.\n\nЭто заготовка: внесите характеристики и выборы со своего листа.'}),
@@ -277,6 +278,7 @@ export function spendTechnique(c,s,id){
 }
 export function rest(c,s,long){
   const next=structuredClone(c);
+  restSummons(next,long);
   for(const r of s.resources){
     if(r.id==='elation-ardor'){next.spent[r.id]=r.max;continue;}
     if(long&&r.isLongRest)next.spent[r.id]=0;
@@ -295,11 +297,12 @@ export function validateSave(data,d){
     if(!Number.isInteger(raw.level)||raw.level<1||raw.level>20)throw Error('Некорректный уровень');
     for(const k of Object.keys(STATS))if(!Number.isInteger(raw.stats?.[k])||raw.stats[k]<1||raw.stats[k]>30)throw Error('Некорректные характеристики');
     const c=createCharacter(raw);c.id=crypto.randomUUID();
-    for(const key of ['manualFeatures','spells','inventory','conditions'])if(!Array.isArray(c[key])||c[key].length>1000)throw Error('Некорректный список '+key);
+    for(const key of ['manualFeatures','spells','inventory','conditions','summons'])if(!Array.isArray(c[key])||c[key].length>1000)throw Error('Некорректный список '+key);
     if(!['','auto',...Object.keys(STATS)].includes(c.maneuverAbility))throw Error('Некорректная характеристика манёвров');
     for(const key of ['damage','tempHp','goldDelta','acBonus','hpBonus','maneuverDCBonus'])if(!Number.isFinite(c[key]))throw Error('Некорректное число '+key);
     for(const entry of [...c.manualFeatures,...c.spells,...c.inventory])if(!entry||typeof entry!=='object'||typeof entry.id!=='string')throw Error('Некорректная запись в листе');
     for(const key of ['choices','spent','itemOverrides'])if(!c[key]||typeof c[key]!=='object'||Array.isArray(c[key]))throw Error('Некорректное поле '+key);
+    for(const pet of c.summons)if(!pet||typeof pet.id!=='string'||typeof pet.spellId!=='string'||typeof pet.form!=='string'||!Number.isInteger(pet.level)||pet.level<1||pet.level>9||!Number.isFinite(pet.damage)||pet.damage<0||!pet.used||typeof pet.used!=='object'||Array.isArray(pet.used))throw Error('Некорректная запись призванного существа');
     c.avatar=typeof c.avatar==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(c.avatar)?c.avatar:'';
     return c;
   });

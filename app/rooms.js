@@ -1,7 +1,7 @@
-import {selectPartyCharacter} from './room-character-selection.js?v=20261027-1';
-import {saveErrorMessage} from './save-errors.js?v=20261027-1';
-import {icon,actionLabel} from './icons.js?v=20261027-1';
-import {masterSummaryHtml} from './master-summary.js?v=20261027-1';
+import {selectPartyCharacter} from './room-character-selection.js?v=20261027-2';
+import {saveErrorMessage} from './save-errors.js?v=20261027-2';
+import {icon,actionLabel} from './icons.js?v=20261027-2';
+import {masterSummaryHtml} from './master-summary.js?v=20261027-2';
 // Shared room state is separate from private player books and their save queue.
 export function createRooms({cloud,esc,safeRich,showDialog,toast,personalJournal,personalCharacters=()=>[],syncPersonal=async()=>{},openCharacter=()=>{},closeCharacter=()=>{}}){
  let rooms=[],roomId='',members=[],notes=[],sheets=[],archives=[],error='',loading=false,channel=null,timer=null,userId=null,refreshing=false,refreshAgain=false,editor=null,fullSheetRoom=null;
