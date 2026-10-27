@@ -1,4 +1,4 @@
-import {prepareBookPayload} from './book-payload.js?v=20261018-6';
+import {prepareBookPayload} from './book-payload.js?v=20261027-1';
 import {createClient} from '@supabase/supabase-js';
 import {cloudConfig} from './cloud-config.js';
 
