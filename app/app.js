@@ -1,21 +1,21 @@
-import {SUMMONS,summonForms,summonStats,summonWithCost,endSummonConcentration} from './summons.js?v=20261027-2';
-import {summonsView} from './summon-view.js?v=20261027-2';
-import {choiceOptions,confirmChoice} from './choice-selection.js?v=20261027-2';
-import {optimizeAvatar} from './book-payload.js?v=20261027-2';
-import {saveErrorMessage} from './save-errors.js?v=20261027-2';
-import {viewKey,rememberView,resolveView,prepareCollapsibleBlocks} from './view-memory.js?v=20261027-2';
-import {icon,actionLabel} from './icons.js?v=20261027-2';
-import {createCharacterReader} from './character-reader.js?v=20261027-2';
-import {initTheme,setTheme} from './theme.js?v=20261027-2';
-import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,spendTechnique,monkWeaponProfile,spellCastingStats,setBackgroundAsiMode,featReason,validateSave,sources} from './engine.js?v=20261027-2';
-import {spellNames} from './spell-names.js?v=20261027-2';
-import {cloud} from './cloud.js?v=20261027-2';
-import {createRooms} from './rooms.js?v=20261027-2';
-import {masterSummary} from './master-summary.js?v=20261027-2';
-import {createCombat} from './combat.js?v=20261027-2';
-import {createMerchants} from './merchants.js?v=20261027-2';
-import {activeAbilities,activeResourcePool,activeCostLabel,useActiveAbility} from './active-abilities.js?v=20261027-2';
-import {WEAPON_MASTERY,MASTERY_RULES,masteryLimit,eligibleMasteryWeapons,learnedMasteries,weaponActivities} from './weapon-activities.js?v=20261027-2';
+import {SUMMONS,summonForms,summonStats,summonWithCost,endSummonConcentration} from './summons.js?v=20261027-3';
+import {summonsView} from './summon-view.js?v=20261027-3';
+import {choiceOptions,confirmChoice} from './choice-selection.js?v=20261027-3';
+import {optimizeAvatar} from './book-payload.js?v=20261027-3';
+import {saveErrorMessage} from './save-errors.js?v=20261027-3';
+import {viewKey,rememberView,resolveView,prepareCollapsibleBlocks} from './view-memory.js?v=20261027-3';
+import {icon,actionLabel} from './icons.js?v=20261027-3';
+import {createCharacterReader} from './character-reader.js?v=20261027-3';
+import {initTheme,setTheme} from './theme.js?v=20261027-3';
+import {STATS,SKILLS,mod,signed,clamp,cleanName,normalizeDataset,createCharacter,partyTemplates,derive,rest,spendTechnique,monkWeaponProfile,spellCastingStats,setBackgroundAsiMode,featReason,validateSave,sources} from './engine.js?v=20261027-3';
+import {spellNames} from './spell-names.js?v=20261027-3';
+import {cloud} from './cloud.js?v=20261027-3';
+import {createRooms} from './rooms.js?v=20261027-3';
+import {masterSummary} from './master-summary.js?v=20261027-3';
+import {createCombat} from './combat.js?v=20261027-3';
+import {createMerchants} from './merchants.js?v=20261027-3';
+import {activeAbilities,activeResourcePool,activeCostLabel,useActiveAbility} from './active-abilities.js?v=20261027-3';
+import {WEAPON_MASTERY,MASTERY_RULES,masteryLimit,eligibleMasteryWeapons,learnedMasteries,weaponActivities} from './weapon-activities.js?v=20261027-3';
 const $=s=>document.querySelector(s), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let summonPending=null;
 const hasChain=s=>s.traits.some(t=>t.id==='inv-pact-chain-trait');
@@ -376,7 +376,7 @@ document.addEventListener('click',async e=>{
   if(a==='spell-add')return spellPicker();
   if(a==='learn-spell'){const p=spellOf(el.dataset.id);if(c.spells.some(x=>x.id===p.id))return;const reason=spellRestriction(p,c,s);if(reason)return toast(reason);const preparedNow=c.spells.filter(x=>x.prepared&&spellRecord(x.id,c).level>0).length;mutate(()=>c.spells.push({id:p.id,prepared:p.level===0||preparedNow<s.prepared}),{rerender:false});renderSpellPicker();render();toast(p.level?'Заклинание добавлено':'Заговор добавлен');return;}
   if(a==='spell-remove')return mutate(()=>c.spells=c.spells.filter(x=>x.id!==el.dataset.id));
-  if(a==='spell-detail'){const picker=$('#spell-picker-results'),fromPicker=!!picker;if(fromPicker)spellPickerState={query:$('#picker-search').value,cls:$('#picker-class').value,level:$('#picker-level').value,scroll:picker.scrollTop};const p=c?.spells.find(x=>x.id===el.dataset.id&&x.custom)||spellOf(el.dataset.id);showDialog(esc(p.custom?p.name:spellName(p.id)),`${fromPicker?'<button type="button" class="spell-back" data-action="spell-picker-back">← Назад к выбору заклинаний</button>':''}<div class="spell-meta"><span class="tag">${p.level?p.level+' круг':'Заговор'}</span><span>${esc(p.schoolRu||p.school||'')}</span>${spellSaveAbility(p)?`<span class="spell-save-tag">Испытание: <b>${spellSaveAbility(p)}</b>${p.ability&&spellCastingStats(s,p.ability)?' · Сл '+spellCastingStats(s,p.ability).dc:''}</span>`:''}${spellUsesAttackRoll(p)?'<span class="spell-attack-tag">Бросок атаки</span>':''}</div>${p.custom?'':`<div class="spell-facts"><span><b>Время</b>${esc(p.timeRu||p.time)}</span><span><b>Дистанция</b>${esc(p.rangeRu||p.range)}</span><span><b>Компоненты</b>${esc(p.componentsRu||p.components)}</span></div>`}${abilitySummary(p.descriptionRu||p.description)}<div class="spell-description">${formatAbilityText(p.descriptionRu||p.description)}</div><p class="hint">${p.custom?'Своя запись':`Перевод SRD 5.2.1 · оригинальное название: ${esc(p.name)}`}</p>`,true);$('#dialog').dataset.returnToSpellPicker=fromPicker?'true':'';return;}
+  if(a==='spell-detail'){const picker=$('#spell-picker-results'),fromPicker=!!(picker&&$('#dialog').open&&picker.contains(el));if(fromPicker)spellPickerState={query:$('#picker-search').value,cls:$('#picker-class').value,level:$('#picker-level').value,scroll:picker.scrollTop};const p=c?.spells.find(x=>x.id===el.dataset.id&&x.custom)||spellOf(el.dataset.id);showDialog(esc(p.custom?p.name:spellName(p.id)),`${fromPicker?'<button type="button" class="spell-back" data-action="spell-picker-back">← Назад к выбору заклинаний</button>':''}<div class="spell-meta"><span class="tag">${p.level?p.level+' круг':'Заговор'}</span><span>${esc(p.schoolRu||p.school||'')}</span>${spellSaveAbility(p)?`<span class="spell-save-tag">Испытание: <b>${spellSaveAbility(p)}</b>${p.ability&&spellCastingStats(s,p.ability)?' · Сл '+spellCastingStats(s,p.ability).dc:''}</span>`:''}${spellUsesAttackRoll(p)?'<span class="spell-attack-tag">Бросок атаки</span>':''}</div>${p.custom?'':`<div class="spell-facts"><span><b>Время</b>${esc(p.timeRu||p.time)}</span><span><b>Дистанция</b>${esc(p.rangeRu||p.range)}</span><span><b>Компоненты</b>${esc(p.componentsRu||p.components)}</span></div>`}${abilitySummary(p.descriptionRu||p.description)}<div class="spell-description">${formatAbilityText(p.descriptionRu||p.description)}</div><p class="hint">${p.custom?'Своя запись':`Перевод SRD 5.2.1 · оригинальное название: ${esc(p.name)}`}</p>`,true);$('#dialog').dataset.returnToSpellPicker=fromPicker?'true':'';return;}
   if(a==='feat-detail'){const f=dataset.feats.find(x=>x.id===el.dataset.id);showDialog(esc(f.label),`<p class="hint">${esc(f.prerequisite||f.category)}</p>${f.grants.filter(g=>g.type==='trait').map(g=>`<h3>${esc(cleanName(g.name))}</h3><p>${esc(g.description)}</p>`).join('')}`);return;}
   if(a==='summon-ritual')return summonDialog(c,s,{spellId:'find-familiar',level:1,ability:s.casting?.ability,chain:hasChain(s),source:{ritual:true}});
   if(a?.startsWith('summon-'))return summonAction(a,el,c,s);
@@ -435,10 +435,10 @@ document.addEventListener('submit',async e=>{
 $('#import-file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10_000_000)throw Error('Файл слишком большой (максимум 10 МБ)');const data=JSON.parse(await file.text());if(e.target.dataset.mode==='import-dataset'){const checked=normalizeDataset(data);for(const hero of state.characters){if(!checked.classes.some(x=>x.id===hero.classId)||!checked.races.some(x=>x.id===hero.raceId))throw Error('Новый датасет не содержит класс или вид одного из героев. Сначала сохраните листы и используйте совместимый датасет.');derive(hero,checked);}rawDataset=data;dataset=checked;state.dataset=data;save();render();$('#dialog').close();toast('Датасет подключён');}else{const chars=validateSave(data,dataset);mutate(()=>{state.characters.push(...chars);if(data.journal)state.journal=(state.journal?state.journal+'\n\n':'')+String(data.journal);page='party';});toast('Листы добавлены: '+chars.length);}}catch(err){toast(err.message||'Не удалось прочитать файл');}e.target.value='';});
 $('#avatar-file').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5_000_000){toast('Выберите PNG, JPG или WebP до 5 МБ');e.target.value='';return;}const characterId=selected,accountId=cloud.user?.id,reader=new FileReader();reader.onload=async()=>{const avatar=await optimizeAvatar(reader.result),hero=state.characters.find(c=>c.id===characterId);if(hero&&cloud.user?.id===accountId)mutate(()=>hero.avatar=avatar);};reader.readAsDataURL(file);e.target.value='';});
 $('#dialog').addEventListener('click',e=>{if(e.target===$('#dialog'))$('#dialog').close();});
-$('#dialog').addEventListener('close',()=>{choiceDrafts.clear();render();});
+$('#dialog').addEventListener('close',()=>{choiceDrafts.clear();spellPickerState=null;$('#dialog').dataset.returnToSpellPicker='';render();});
 window.addEventListener('storage',e=>{if(e.key===storageKey()){toast('Листы изменены в другой вкладке. Обновите страницу перед редактированием.');}});
 try{
-  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261027-2').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261027-2').then(r=>r.json())]);
+  [rawDataset,spells]=await Promise.all([fetch('./data/party.json?v=20261027-3').then(r=>{if(!r.ok)throw Error('Не удалось загрузить датасет');return r.json();}),fetch('./data/spells.json?v=20261027-3').then(r=>r.json())]);
   const stored=localStorage.getItem(STORE);state=stored?JSON.parse(stored):{characters:partyTemplates(),journal:''};
   if(!Array.isArray(state.characters))throw Error('Повреждено сохранение. Скачайте данные браузера перед сбросом.');
   dataset=normalizeDataset(state.dataset||rawDataset);selected=state.characters[0]?.id;

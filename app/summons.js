@@ -1,6 +1,6 @@
 // Mechanical summaries: PHB 2024; SRD 5.2.1 (CC BY 4.0). Sources in docs/summons.md.
-import {spellCastingStats} from './engine.js?v=20261027-2';
-import {useActiveAbility} from './active-abilities.js?v=20261027-2';
+import {spellCastingStats} from './engine.js?v=20261027-3';
+import {useActiveAbility} from './active-abilities.js?v=20261027-3';
 const attack=(name,damage,type,extra={})=>({name,damage,type,reach:5,...extra});
 const form=(name,extra={})=>({name,...extra});
 export const SUMMONS={

@@ -1,6 +1,6 @@
-import {restSummons} from './summons.js?v=20261027-2';
-import {addBuiltInCharacters} from './character-additions.js?v=20261027-2';
-import {addActiveAbilityResources} from './active-abilities.js?v=20261027-2';
+import {restSummons} from './summons.js?v=20261027-3';
+import {addBuiltInCharacters} from './character-additions.js?v=20261027-3';
+import {addActiveAbilityResources} from './active-abilities.js?v=20261027-3';
 export const STATS = {str:'Сила',dex:'Ловкость',con:'Телосложение',int:'Интеллект',wis:'Мудрость',cha:'Харизма'};
 export const SKILLS = {acrobatics:['Акробатика','dex'],'animal handling':['Уход за животными','wis'],arcana:['Магия','int'],athletics:['Атлетика','str'],deception:['Обман','cha'],history:['История','int'],insight:['Проницательность','wis'],intimidation:['Запугивание','cha'],investigation:['Расследование','int'],medicine:['Медицина','wis'],nature:['Природа','int'],perception:['Внимательность','wis'],performance:['Выступление','cha'],persuasion:['Убеждение','cha'],religion:['Религия','int'],'sleight of hand':['Ловкость рук','dex'],stealth:['Скрытность','dex'],survival:['Выживание','wis']};
 export const mod = n=>Math.floor((n-10)/2);
